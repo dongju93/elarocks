@@ -171,7 +171,8 @@ async fn main() {
             let entries = parse_output(&data);
             
             // Write the parsed data to a CSV file
-            if let Err(e) = write_to_csv(entries, "C:/Users/spdlq/Dropbox/EINSIS/03. CODE/files/event1_processcreate.csv") {
+            // if let Err(e) = write_to_csv(entries, "C:/Users/spdlq/Dropbox/EINSIS/03. CODE/files/event1_processcreate.csv") {
+            if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event1_processcreate.csv") {
                 eprintln!("Error writing to CSV: {:?}", e);
             }
         },
