@@ -15,3 +15,11 @@ serde ={version = "1.0.182", features = ["derive"]}
 rocksdb = "0.21.0"
 csv = "1.2.2"
 chrono = "0.4.26"
+
+[[bin]]
+name = "main2"
+path = "src/main2.rs"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
