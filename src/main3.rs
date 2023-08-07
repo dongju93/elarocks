@@ -10,7 +10,7 @@ use env::{INDEX, ES_URL, ID, PW};
 use chrono::{DateTime, Utc, Duration, FixedOffset};
 
 // Constants
-const EVENT_CODE: &str = "2";
+const EVENT_CODE: &str = "3";
 const TIMESTAMP: &str = "2023-08-07T03:05:11.628Z";
 const SIZE: usize = 10000000;
 
@@ -59,8 +59,10 @@ async fn fetch_data_from_es() -> Result<serde_json::Value, reqwest::Error> {
     send_request(&client, &query).await
 }
 
+
+
 #[derive(Serialize)] // We're using the serde crate's Serialize trait to help with CSV writing
-struct EventTwo {
+struct EventThree {
     timestamp: Option<String>,
     event_type: Option<String>,
     rule_name: Option<String>,
@@ -68,30 +70,48 @@ struct EventTwo {
     process_guid: Option<String>,
     process_id: Option<String>,
     image: Option<String>,
-    target_filename: Option<String>,
-    creation_utc_time: Option<String>,
-    previous_creation_utc_time: Option<String>,
-    user: Option<String>
+    user: Option<String>,
+    initiated: Option<String>,
+    protocol: Option<String>,
+    source_is_ipv6: Option<String>,
+    source_ip: Option<String>,
+    source_hostname: Option<String>,
+    source_port: Option<String>,
+    source_port_name: Option<String>,
+    destination_is_ipv6: Option<String>,
+    destination_ip: Option<String>,
+    destination_hostname: Option<String>,
+    destination_port: Option<String>,
+    destination_port_name: Option<String>,
 }
 
-fn parse_output(data: &serde_json::Value) -> Vec<EventTwo> {
+fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
     let mut entries = Vec::new();
 
     if let Some(hits) = data["hits"]["hits"].as_array() {
         for hit in hits {
             if let Some(message) = hit["_source"]["message"].as_str() {
-                let mut entry = EventTwo {
+                let mut entry = EventThree {
                     timestamp: None,
-                    event_type: Some("File creation time changed".to_string()),
+                    event_type: Some("Network connection detected".to_string()),
                     rule_name: None,
                     utc_time: None,
                     process_guid: None,
                     process_id: None,
                     image: None,
-                    target_filename: None,
-                    creation_utc_time: None,
-                    previous_creation_utc_time: None,
-                    user: None
+                    user: None,
+                    protocol: None,
+                    initiated: None,
+                    source_is_ipv6: None,
+                    source_ip: None,
+                    source_hostname: None,
+                    source_port: None,
+                    source_port_name: None,
+                    destination_is_ipv6: None,
+                    destination_ip: None,
+                    destination_hostname: None,
+                    destination_port: None,
+                    destination_port_name: None,
                 };
                 
                 if let Some(ts) = hit["_source"]["@timestamp"].as_str() {
@@ -108,17 +128,23 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventTwo> {
                         let key = segments[0].trim();
                         let value = segments[1].trim();
                         match key {
-                            "RuleName" => entry.rule_name = Some(value.to_string()),
                             "UtcTime" => entry.utc_time = Some(value.to_string()),
                             "ProcessGuid" => entry.process_guid = Some(value.to_string()),
                             "ProcessId" => entry.process_id = Some(value.to_string()),
                             "Image" => entry.image = Some(value.to_string()),
-                            "TargetFilename" => entry.target_filename = Some(value.to_string()),
-                            "CreationUtcTime" => entry.creation_utc_time = Some(value.to_string()),
-                            "PreviousCreationUtcTime" => entry.previous_creation_utc_time = Some(value.to_string()),
-                            "User" => entry.user = Some(value.to_string()),
-
-
+                            "User" => entry.image = Some(value.to_string()),
+                            "Protocol" => entry.protocol = Some(value.to_string()),
+                            "Initiated" => entry.initiated = Some(value.to_string()),
+                            "SourceIsIpv6" => entry.source_is_ipv6 = Some(value.to_string()),
+                            "SourceIp" => entry.source_ip = Some(value.to_string()),
+                            "SourceHostname" => entry.source_hostname = Some(value.to_string()),
+                            "SourcePort" => entry.source_port = Some(value.to_string()),
+                            "SourcePortName" => entry.source_port_name = Some(value.to_string()),
+                            "DestinationIsIpv6" => entry.destination_is_ipv6 = Some(value.to_string()),
+                            "DestinationIp" => entry.destination_ip = Some(value.to_string()),
+                            "DestinationHostname" => entry.destination_hostname = Some(value.to_string()),
+                            "DestinationPort" => entry.destination_port = Some(value.to_string()),
+                            "DestinationPortName" => entry.destination_port_name = Some(value.to_string()),
                             _ => {}
                         }
                     }
@@ -132,7 +158,7 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventTwo> {
     entries
 }
 
-fn write_to_csv(entries: Vec<EventTwo>, filename: &str) -> std::io::Result<()> {
+fn write_to_csv(entries: Vec<EventThree>, filename: &str) -> std::io::Result<()> {
     let mut wtr = Writer::from_path(filename)?;
     for entry in entries {
         wtr.serialize(entry)?;
@@ -150,7 +176,7 @@ async fn main() {
             
             // Write the parsed data to a CSV file
             // if let Err(e) = write_to_csv(entries, "C:/Users/spdlq/Dropbox/EINSIS/03. CODE/files/event1_processcreate.csv") {
-            if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event2_filecreate.csv") {
+            if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event3_networkconn.csv") {
                 eprintln!("Error writing to CSV: {:?}", e);
             }
         },
