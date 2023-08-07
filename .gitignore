@@ -1,0 +1,5 @@
+/target
+/src/env.rs
+/src/main_.rs
+/src/main__.rs
+.DS_Store
