@@ -13,3 +13,5 @@ elasticsearch = "8.5.0-alpha.1"
 base64 = "0.21.2"
 serde ={version = "1.0.182", features = ["derive"]}
 rocksdb = "0.21.0"
+csv = "1.2.2"
+chrono = "0.4.26"

@@ -45,7 +45,7 @@ async fn fetch_data_from_es() -> Result<serde_json::Value, reqwest::Error> {
 #[derive(Serialize)] // We're using the serde crate's Serialize trait to help with CSV writing
 struct EventOne {
     timestamp: Option<String>,
-    event_type: Option<String>,
+    process_create: Option<String>,
     rule_name: Option<String>,
     utc_time: Option<String>,
     process_guid: Option<String>,
@@ -79,7 +79,7 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventOne> {
             if let Some(message) = hit["_source"]["message"].as_str() {
                 let mut entry = EventOne {
                     timestamp: None,
-                    event_type: Some("Process Create".to_string()),
+                    process_create: None,
                     rule_name: None,
                     utc_time: None,
                     process_guid: None,
@@ -107,11 +107,11 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventOne> {
                 
                 if let Some(ts) = hit["_source"]["@timestamp"].as_str() {
                     if let Ok(datetime) = DateTime::parse_from_rfc3339(ts) {
-                        let adjusted_time = (datetime.with_timezone(&Utc) + Duration::hours(9)).to_string();
-                        entry.timestamp = Some(adjusted_time.replace("UTC", "")); // Remove "UTC" from timestamp
+                        let adjusted_time = datetime.with_timezone(&Utc) + Duration::hours(9);
+                        entry.timestamp = Some(adjusted_time.to_string());
                     }
                 }
-                
+
                 for part in message.split('\n') {
                     let segments: Vec<_> = part.splitn(2, ':').collect();
                     println!("{:?}", segments);  // Debug prints
@@ -119,6 +119,8 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventOne> {
                         let key = segments[0].trim();
                         let value = segments[1].trim();
                         match key {
+                            "Process Create" => entry.process_create = Some(value.to_string()),
+                            "RuleName" => entry.rule_name = Some(value.to_string()),
                             "UtcTime" => entry.utc_time = Some(value.to_string()),
                             "ProcessGuid" => entry.process_guid = Some(value.to_string()),
                             "ProcessId" => entry.process_id = Some(value.to_string()),
