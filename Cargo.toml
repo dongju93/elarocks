@@ -27,3 +27,11 @@ path = "src/main2.rs"
 [[bin]]
 name = "main3"
 path = "src/main3.rs"
+
+[[bin]]
+name = "rocks"
+path = "src/rocks.rs"
+
+[[bin]]
+name = "select"
+path = "src/select.rs"
