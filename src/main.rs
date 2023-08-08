@@ -11,8 +11,8 @@ use chrono::{DateTime, Utc, Duration, FixedOffset};
 
 // Constants
 const EVENT_CODE: &str = "1";
-const TIMESTAMP: &str = "2023-08-07T03:05:11.628Z";
-const SIZE: usize = 10;
+const TIMESTAMP: &str = "2023-08-08T03:00:00.000Z";
+const SIZE: usize = 10000000;
 
 fn build_client() -> Result<reqwest::Client, reqwest::Error> {
     let auth_value = format!("{}:{}", ID, PW);
@@ -193,8 +193,8 @@ async fn main() {
             let entries = parse_output(&data);
             
             // Write the parsed data to a CSV file
-            if let Err(e) = write_to_csv(entries, "C:/Users/spdlq/Dropbox/EINSIS/03. CODE/files/event1_processcreate.csv") {
-            // if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event1_processcreate.csv") {
+            // if let Err(e) = write_to_csv(entries, "C:/Users/spdlq/Dropbox/EINSIS/03. CODE/files/event1_processcreate.csv") {
+            if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event1_processcreate_joe_pc_20230808_1200.csv") {
                 eprintln!("Error writing to CSV: {:?}", e);
             }
         },
