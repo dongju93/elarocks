@@ -172,7 +172,9 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventOne> {
 }
 
 fn write_to_csv(entries: Vec<EventOne>, filename: &str) -> std::io::Result<()> {
-    let mut wtr = Writer::from_path(filename)?;
+    let mut wtr = csv::WriterBuilder::new()
+        .delimiter(b'\t') // Set the delimiter to tab
+        .from_path(filename)?;
     for entry in entries {
         wtr.serialize(entry)?;
     }
