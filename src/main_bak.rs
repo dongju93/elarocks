@@ -5,9 +5,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::{from_str, json, to_string};
 use tokio;
 use csv::Writer;
-mod env;
 use env::{INDEX, ES_URL, ID, PW};
 use chrono::{DateTime, Utc, Duration, FixedOffset};
+
+mod env;
+mod eventOne;
 
 // Constants
 const EVENT_CODE: &str = "1";
@@ -62,34 +64,6 @@ async fn fetch_data_from_es() -> Result<serde_json::Value, reqwest::Error> {
 
 
 #[derive(Serialize)] // We're using the serde crate's Serialize trait to help with CSV writing
-struct EventOne {
-    agent_name: Option<String>,
-    agent_id: Option<String>,
-    event_type: Option<String>,
-    rule_name: Option<String>,
-    utc_time: Option<String>,
-    process_guid: Option<String>,
-    process_id: Option<String>,
-    image: Option<String>,
-    file_version: Option<String>,
-    description: Option<String>,
-    product: Option<String>,
-    company: Option<String>,
-    original_file_name: Option<String>,
-    command_line: Option<String>,
-    current_directory: Option<String>,
-    user: Option<String>,
-    logon_guid: Option<String>,
-    logon_id: Option<String>,
-    terminal_session_id: Option<String>,
-    integrity_level: Option<String>,
-    hashes: Option<String>,
-    parent_process_guid: Option<String>,
-    parent_process_id: Option<String>,
-    parent_image: Option<String>,
-    parent_command_line: Option<String>,
-    parent_user: Option<String>
-}
 
 fn parse_output(data: &serde_json::Value) -> Vec<EventOne> {
     let mut entries = Vec::new();
@@ -98,8 +72,7 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventOne> {
         for hit in hits {
             if let Some(message) = hit["_source"]["message"].as_str() {
                 let mut entry = EventOne {
-                    agent_name: None,
-                    agent_id: None,
+                    timestamp: None,
                     event_type: Some("Process Create".to_string()),
                     rule_name: None,
                     utc_time: None,
@@ -125,13 +98,12 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventOne> {
                     parent_command_line: None,
                     parent_user: None
                 };
-
-                if let Some(agent_name) = hit["_source"]["agent"]["name"].as_str() {
-                    entry.agent_name = Some(agent_name.to_string());
-                }
-
-                if let Some(agent_id) = hit["_source"]["agent"]["id"].as_str() {
-                    entry.agent_id = Some(agent_id.to_string());
+                
+                if let Some(ts) = hit["_source"]["@timestamp"].as_str() {
+                    if let Ok(datetime) = DateTime::parse_from_rfc3339(ts) {
+                        let adjusted_time = (datetime.with_timezone(&Utc) + Duration::hours(9)).to_string();
+                        entry.timestamp = Some(adjusted_time.replace("UTC", "")); // Remove "UTC" from timestamp
+                    }
                 }
                 
                 for part in message.split('\n') {
@@ -193,8 +165,8 @@ async fn main() {
             let entries = parse_output(&data);
             
             // Write the parsed data to a CSV file
-            if let Err(e) = write_to_csv(entries, "C:/Users/spdlq/Dropbox/EINSIS/03. CODE/files/event1_processcreate.csv") {
-            // if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event1_processcreate.csv") {
+            // if let Err(e) = write_to_csv(entries, "C:/Users/spdlq/Dropbox/EINSIS/03. CODE/files/event1_processcreate.csv") {
+            if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event1_processcreate.csv") {
                 eprintln!("Error writing to CSV: {:?}", e);
             }
         },
