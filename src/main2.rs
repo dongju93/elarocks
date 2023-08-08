@@ -1,17 +1,14 @@
 use reqwest::header;
-use reqwest::Client;
-use rocksdb::{Options, DB};
-use serde::{Deserialize, Serialize};
-use serde_json::{from_str, json, to_string};
+use serde::{Serialize};
+use serde_json::{json};
 use tokio;
 use csv::Writer;
 mod env;
 use env::{INDEX, ES_URL, ID, PW};
-use chrono::{DateTime, Utc, Duration, FixedOffset};
 
 // Constants
 const EVENT_CODE: &str = "2";
-const TIMESTAMP: &str = "2023-08-07T03:05:11.628Z";
+const TIMESTAMP: &str = "2023-08-08T03:00:00.000Z";
 const SIZE: usize = 10000000;
 
 fn build_client() -> Result<reqwest::Client, reqwest::Error> {
@@ -61,9 +58,9 @@ async fn fetch_data_from_es() -> Result<serde_json::Value, reqwest::Error> {
 
 #[derive(Serialize)] // We're using the serde crate's Serialize trait to help with CSV writing
 struct EventTwo {
-    timestamp: Option<String>,
+    agent_name: Option<String>,
+    agent_id: Option<String>,
     event_type: Option<String>,
-    rule_name: Option<String>,
     utc_time: Option<String>,
     process_guid: Option<String>,
     process_id: Option<String>,
@@ -81,9 +78,9 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventTwo> {
         for hit in hits {
             if let Some(message) = hit["_source"]["message"].as_str() {
                 let mut entry = EventTwo {
-                    timestamp: None,
+                    agent_name: None,
+                    agent_id: None,
                     event_type: Some("File creation time changed".to_string()),
-                    rule_name: None,
                     utc_time: None,
                     process_guid: None,
                     process_id: None,
@@ -93,14 +90,16 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventTwo> {
                     previous_creation_utc_time: None,
                     user: None
                 };
+
                 
-                if let Some(ts) = hit["_source"]["@timestamp"].as_str() {
-                    if let Ok(datetime) = DateTime::parse_from_rfc3339(ts) {
-                        let adjusted_time = (datetime.with_timezone(&Utc) + Duration::hours(9)).to_string();
-                        entry.timestamp = Some(adjusted_time.replace("UTC", "")); // Remove "UTC" from timestamp
-                    }
+                if let Some(agent_name) = hit["_source"]["agent"]["name"].as_str() {
+                    entry.agent_name = Some(agent_name.to_string());
                 }
-                
+
+                if let Some(agent_id) = hit["_source"]["agent"]["id"].as_str() {
+                    entry.agent_id = Some(agent_id.to_string());
+                }
+
                 for part in message.split('\n') {
                     let segments: Vec<_> = part.splitn(2, ':').collect();
                     println!("{:?}", segments);  // Debug prints
@@ -108,7 +107,6 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventTwo> {
                         let key = segments[0].trim();
                         let value = segments[1].trim();
                         match key {
-                            "RuleName" => entry.rule_name = Some(value.to_string()),
                             "UtcTime" => entry.utc_time = Some(value.to_string()),
                             "ProcessGuid" => entry.process_guid = Some(value.to_string()),
                             "ProcessId" => entry.process_id = Some(value.to_string()),
@@ -150,7 +148,7 @@ async fn main() {
             
             // Write the parsed data to a CSV file
             // if let Err(e) = write_to_csv(entries, "C:/Users/spdlq/Dropbox/EINSIS/03. CODE/files/event1_processcreate.csv") {
-            if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event2_filecreate.csv") {
+            if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event2_filecreate_joe_pc_20230808_1200.csv") {
                 eprintln!("Error writing to CSV: {:?}", e);
             }
         },

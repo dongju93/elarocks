@@ -1,13 +1,10 @@
 use reqwest::header;
-use reqwest::Client;
-use rocksdb::{Options, DB};
-use serde::{Deserialize, Serialize};
-use serde_json::{from_str, json, to_string};
+use serde::{Serialize};
+use serde_json::{json};
 use tokio;
 use csv::Writer;
 mod env;
 use env::{INDEX, ES_URL, ID, PW};
-use chrono::{DateTime, Utc, Duration, FixedOffset};
 
 // Constants
 const EVENT_CODE: &str = "1";

@@ -1,17 +1,14 @@
 use reqwest::header;
-use reqwest::Client;
-use rocksdb::{Options, DB};
-use serde::{Deserialize, Serialize};
-use serde_json::{from_str, json, to_string};
+use serde::{Serialize};
+use serde_json::{json};
 use tokio;
 use csv::Writer;
 mod env;
 use env::{INDEX, ES_URL, ID, PW};
-use chrono::{DateTime, Utc, Duration, FixedOffset};
 
 // Constants
 const EVENT_CODE: &str = "3";
-const TIMESTAMP: &str = "2023-08-07T03:05:11.628Z";
+const TIMESTAMP: &str = "2023-08-08T03:00:00.000Z";
 const SIZE: usize = 10000000;
 
 fn build_client() -> Result<reqwest::Client, reqwest::Error> {
@@ -63,9 +60,9 @@ async fn fetch_data_from_es() -> Result<serde_json::Value, reqwest::Error> {
 
 #[derive(Serialize)] // We're using the serde crate's Serialize trait to help with CSV writing
 struct EventThree {
-    timestamp: Option<String>,
+    agent_name: Option<String>,
+    agent_id: Option<String>,
     event_type: Option<String>,
-    rule_name: Option<String>,
     utc_time: Option<String>,
     process_guid: Option<String>,
     process_id: Option<String>,
@@ -92,9 +89,9 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
         for hit in hits {
             if let Some(message) = hit["_source"]["message"].as_str() {
                 let mut entry = EventThree {
-                    timestamp: None,
+                    agent_name: None,
+                    agent_id: None,
                     event_type: Some("Network connection detected".to_string()),
-                    rule_name: None,
                     utc_time: None,
                     process_guid: None,
                     process_id: None,
@@ -113,12 +110,13 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
                     destination_port: None,
                     destination_port_name: None,
                 };
-                
-                if let Some(ts) = hit["_source"]["@timestamp"].as_str() {
-                    if let Ok(datetime) = DateTime::parse_from_rfc3339(ts) {
-                        let adjusted_time = (datetime.with_timezone(&Utc) + Duration::hours(9)).to_string();
-                        entry.timestamp = Some(adjusted_time.replace("UTC", "")); // Remove "UTC" from timestamp
-                    }
+
+                if let Some(agent_name) = hit["_source"]["agent"]["name"].as_str() {
+                    entry.agent_name = Some(agent_name.to_string());
+                }
+
+                if let Some(agent_id) = hit["_source"]["agent"]["id"].as_str() {
+                    entry.agent_id = Some(agent_id.to_string());
                 }
                 
                 for part in message.split('\n') {
@@ -176,7 +174,7 @@ async fn main() {
             
             // Write the parsed data to a CSV file
             // if let Err(e) = write_to_csv(entries, "C:/Users/spdlq/Dropbox/EINSIS/03. CODE/files/event1_processcreate.csv") {
-            if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event3_networkconn.csv") {
+            if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event3_networkconn_joe_pc_20230808_1200.csv") {
                 eprintln!("Error writing to CSV: {:?}", e);
             }
         },
