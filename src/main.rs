@@ -62,7 +62,7 @@ async fn fetch_data_from_es() -> Result<serde_json::Value, reqwest::Error> {
 struct EventOne {
     agent_name: Option<String>,
     agent_id: Option<String>,
-    event_type: Option<String>,
+    event_action: Option<String>,
     utc_time: Option<String>,
     process_guid: Option<String>,
     process_id: Option<String>,
@@ -96,7 +96,7 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventOne> {
                 let mut entry = EventOne {
                     agent_name: None,
                     agent_id: None,
-                    event_type: Some("Process Create".to_string()),
+                    event_action: Some("Process Create".to_string()),
                     utc_time: None,
                     process_guid: None,
                     process_id: None,

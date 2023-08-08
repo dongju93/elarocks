@@ -7,7 +7,7 @@ mod env;
 use env::{INDEX, ES_URL, ID, PW};
 
 // Constants
-const EVENT_CODE: &str = "3";
+const EVENT_CODE: &str = "17";
 const TIMESTAMP: &str = "2023-08-08T03:00:00.000Z";
 const SIZE: usize = 10000000;
 
@@ -63,23 +63,13 @@ struct EventThree {
     agent_name: Option<String>,
     agent_id: Option<String>,
     event_action: Option<String>,
+    event_type: Option<String>,
     utc_time: Option<String>,
     process_guid: Option<String>,
     process_id: Option<String>,
+    pipe_name: Option<String>,
     image: Option<String>,
     user: Option<String>,
-    initiated: Option<String>,
-    protocol: Option<String>,
-    source_is_ipv6: Option<String>,
-    source_ip: Option<String>,
-    source_hostname: Option<String>,
-    source_port: Option<String>,
-    source_port_name: Option<String>,
-    destination_is_ipv6: Option<String>,
-    destination_ip: Option<String>,
-    destination_hostname: Option<String>,
-    destination_port: Option<String>,
-    destination_port_name: Option<String>,
 }
 
 fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
@@ -91,24 +81,14 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
                 let mut entry = EventThree {
                     agent_name: None,
                     agent_id: None,
-                    event_action: Some("Network connection detected".to_string()),
+                    event_action: Some("Pipe Created".to_string()),
+                    event_type: None,
                     utc_time: None,
                     process_guid: None,
                     process_id: None,
+                    pipe_name: None,
                     image: None,
                     user: None,
-                    protocol: None,
-                    initiated: None,
-                    source_is_ipv6: None,
-                    source_ip: None,
-                    source_hostname: None,
-                    source_port: None,
-                    source_port_name: None,
-                    destination_is_ipv6: None,
-                    destination_ip: None,
-                    destination_hostname: None,
-                    destination_port: None,
-                    destination_port_name: None,
                 };
 
                 if let Some(agent_name) = hit["_source"]["agent"]["name"].as_str() {
@@ -126,23 +106,13 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
                         let key = segments[0].trim();
                         let value = segments[1].trim();
                         match key {
+                            "EventType" => entry.event_type = Some(value.to_string()),
                             "UtcTime" => entry.utc_time = Some(value.to_string()),
                             "ProcessGuid" => entry.process_guid = Some(value.to_string()),
                             "ProcessId" => entry.process_id = Some(value.to_string()),
+                            "PipeName" => entry.pipe_name = Some(value.to_string()),
                             "Image" => entry.image = Some(value.to_string()),
-                            "User" => entry.image = Some(value.to_string()),
-                            "Protocol" => entry.protocol = Some(value.to_string()),
-                            "Initiated" => entry.initiated = Some(value.to_string()),
-                            "SourceIsIpv6" => entry.source_is_ipv6 = Some(value.to_string()),
-                            "SourceIp" => entry.source_ip = Some(value.to_string()),
-                            "SourceHostname" => entry.source_hostname = Some(value.to_string()),
-                            "SourcePort" => entry.source_port = Some(value.to_string()),
-                            "SourcePortName" => entry.source_port_name = Some(value.to_string()),
-                            "DestinationIsIpv6" => entry.destination_is_ipv6 = Some(value.to_string()),
-                            "DestinationIp" => entry.destination_ip = Some(value.to_string()),
-                            "DestinationHostname" => entry.destination_hostname = Some(value.to_string()),
-                            "DestinationPort" => entry.destination_port = Some(value.to_string()),
-                            "DestinationPortName" => entry.destination_port_name = Some(value.to_string()),
+                            "User" => entry.user = Some(value.to_string()),
                             _ => {}
                         }
                     }
@@ -174,7 +144,7 @@ async fn main() {
             
             // Write the parsed data to a CSV file
             // if let Err(e) = write_to_csv(entries, "C:/Users/spdlq/Dropbox/EINSIS/03. CODE/files/event1_processcreate.csv") {
-            if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event3_networkconn_joe_pc_20230808_1200.csv") {
+            if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event17_pipecreated_joe_pc_20230808_1200.csv") {
                 eprintln!("Error writing to CSV: {:?}", e);
             }
         },
