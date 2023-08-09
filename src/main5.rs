@@ -106,7 +106,7 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
                             "ProcessGuid" => entry.process_guid = Some(value.to_string()),
                             "ProcessId" => entry.process_id = Some(value.to_string()),
                             "Image" => entry.image = Some(value.to_string()),
-                            "User" => entry.image = Some(value.to_string()),
+                            "User" => entry.user = Some(value.to_string()),
                             _ => {}
                         }
                     }
