@@ -1,1 +1,1 @@
-pub mod eventOne;
+pub mod events;

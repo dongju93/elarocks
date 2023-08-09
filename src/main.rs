@@ -1,10 +1,10 @@
-use reqwest::header;
-use serde::{Serialize};
-use serde_json::{json};
-use tokio;
 use csv::Writer;
+use reqwest::header;
+use serde::Serialize;
+use serde_json::json;
+use tokio;
 mod env;
-use env::{INDEX, ES_URL, ID, PW};
+use env::{ES_URL, ID, INDEX, PW};
 
 // Constants
 const EVENT_CODE: &str = "1";
@@ -19,7 +19,10 @@ fn build_client() -> Result<reqwest::Client, reqwest::Error> {
         .danger_accept_invalid_certs(true) // Bypass SSL verification (not recommended for production!)
         .default_headers({
             let mut headers = header::HeaderMap::new();
-            headers.insert(header::AUTHORIZATION, header::HeaderValue::from_str(&basic_auth_header).unwrap());
+            headers.insert(
+                header::AUTHORIZATION,
+                header::HeaderValue::from_str(&basic_auth_header).unwrap(),
+            );
             headers
         })
         .build()
@@ -39,24 +42,20 @@ fn build_query() -> serde_json::Value {
     })
 }
 
-async fn send_request(client: &reqwest::Client, query: &serde_json::Value) -> Result<serde_json::Value, reqwest::Error> {
+async fn send_request(
+    client: &reqwest::Client,
+    query: &serde_json::Value,
+) -> Result<serde_json::Value, reqwest::Error> {
     let url = format!("{}/{}/_search", ES_URL, INDEX);
-    let response = client
-        .post(&url)
-        .json(query)
-        .send()
-        .await?;
+    let response = client.post(&url).json(query).send().await?;
     response.json().await
 }
-
 
 async fn fetch_data_from_es() -> Result<serde_json::Value, reqwest::Error> {
     let client = build_client()?;
     let query = build_query();
     send_request(&client, &query).await
 }
-
-
 
 #[derive(Serialize)] // We're using the serde crate's Serialize trait to help with CSV writing
 struct EventOne {
@@ -84,7 +83,7 @@ struct EventOne {
     parent_process_id: Option<String>,
     parent_image: Option<String>,
     parent_command_line: Option<String>,
-    parent_user: Option<String>
+    parent_user: Option<String>,
 }
 
 fn parse_output(data: &serde_json::Value) -> Vec<EventOne> {
@@ -118,7 +117,7 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventOne> {
                     parent_process_id: None,
                     parent_image: None,
                     parent_command_line: None,
-                    parent_user: None
+                    parent_user: None,
                 };
 
                 if let Some(agent_name) = hit["_source"]["agent"]["name"].as_str() {
@@ -128,10 +127,10 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventOne> {
                 if let Some(agent_id) = hit["_source"]["agent"]["id"].as_str() {
                     entry.agent_id = Some(agent_id.to_string());
                 }
-                
+
                 for part in message.split('\n') {
                     let segments: Vec<_> = part.splitn(2, ':').collect();
-                    println!("{:?}", segments);  // Debug prints
+                    println!("{:?}", segments); // Debug prints
                     if segments.len() == 2 {
                         let key = segments[0].trim();
                         let value = segments[1].trim();
@@ -144,25 +143,33 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventOne> {
                             "Description" => entry.description = Some(value.to_string()),
                             "Product" => entry.product = Some(value.to_string()),
                             "Company" => entry.company = Some(value.to_string()),
-                            "OriginalFileName" => entry.original_file_name = Some(value.to_string()),
+                            "OriginalFileName" => {
+                                entry.original_file_name = Some(value.to_string())
+                            }
                             "CommandLine" => entry.command_line = Some(value.to_string()),
                             "CurrentDirectory" => entry.current_directory = Some(value.to_string()),
                             "User" => entry.user = Some(value.to_string()),
                             "LogonGuid" => entry.logon_guid = Some(value.to_string()),
                             "LogonId" => entry.logon_id = Some(value.to_string()),
-                            "TerminalSessionId" => entry.terminal_session_id = Some(value.to_string()),
+                            "TerminalSessionId" => {
+                                entry.terminal_session_id = Some(value.to_string())
+                            }
                             "IntegrityLevel" => entry.integrity_level = Some(value.to_string()),
                             "Hashes" => entry.hashes = Some(value.to_string()),
-                            "ParentProcessGuid" => entry.parent_process_guid = Some(value.to_string()),
+                            "ParentProcessGuid" => {
+                                entry.parent_process_guid = Some(value.to_string())
+                            }
                             "ParentProcessId" => entry.parent_process_id = Some(value.to_string()),
                             "ParentImage" => entry.parent_image = Some(value.to_string()),
-                            "ParentCommandLine" => entry.parent_command_line = Some(value.to_string()),
+                            "ParentCommandLine" => {
+                                entry.parent_command_line = Some(value.to_string())
+                            }
                             "ParentUser" => entry.parent_user = Some(value.to_string()),
                             _ => {}
                         }
                     }
                 }
-                
+
                 entries.push(entry);
             }
         }
@@ -182,19 +189,21 @@ fn write_to_csv(entries: Vec<EventOne>, filename: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-
 #[tokio::main]
 async fn main() {
     match fetch_data_from_es().await {
         Ok(data) => {
             let entries = parse_output(&data);
-            
+
             // Write the parsed data to a CSV file
-            if let Err(e) = write_to_csv(entries, "C:/Users/samsung/Downloads/csvfiles/event1_processcreate_joe_pc_20230808_1200.csv") {
-            // if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event1_processcreate_joe_pc_20230808_1200.csv") {
+            if let Err(e) = write_to_csv(
+                entries,
+                "C:/Users/samsung/Downloads/csvfiles/event1_processcreate_joe_pc_20230808_1200.csv",
+            ) {
+                // if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event1_processcreate_joe_pc_20230808_1200.csv") {
                 eprintln!("Error writing to CSV: {:?}", e);
             }
-        },
+        }
         Err(err) => {
             eprintln!("Error: {:?}", err);
         }

@@ -1,6 +1,6 @@
-use rocksdb::{DB, WriteBatch, WriteOptions};
-use std::error::Error;
 use csv::ReaderBuilder;
+use rocksdb::{WriteBatch, WriteOptions, DB};
+use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // Open or create a RocksDB database

@@ -1,10 +1,10 @@
-use reqwest::header;
-use serde::{Serialize};
-use serde_json::{json};
-use tokio;
 use csv::Writer;
+use reqwest::header;
+use serde::Serialize;
+use serde_json::json;
+use tokio;
 mod env;
-use env::{INDEX, ES_URL, ID, PW};
+use env::{ES_URL, ID, INDEX, PW};
 
 // Constants
 const EVENT_CODE: &str = "14";
@@ -19,7 +19,10 @@ fn build_client() -> Result<reqwest::Client, reqwest::Error> {
         .danger_accept_invalid_certs(true) // Bypass SSL verification (not recommended for production!)
         .default_headers({
             let mut headers = header::HeaderMap::new();
-            headers.insert(header::AUTHORIZATION, header::HeaderValue::from_str(&basic_auth_header).unwrap());
+            headers.insert(
+                header::AUTHORIZATION,
+                header::HeaderValue::from_str(&basic_auth_header).unwrap(),
+            );
             headers
         })
         .build()
@@ -39,24 +42,20 @@ fn build_query() -> serde_json::Value {
     })
 }
 
-async fn send_request(client: &reqwest::Client, query: &serde_json::Value) -> Result<serde_json::Value, reqwest::Error> {
+async fn send_request(
+    client: &reqwest::Client,
+    query: &serde_json::Value,
+) -> Result<serde_json::Value, reqwest::Error> {
     let url = format!("{}/{}/_search", ES_URL, INDEX);
-    let response = client
-        .post(&url)
-        .json(query)
-        .send()
-        .await?;
+    let response = client.post(&url).json(query).send().await?;
     response.json().await
 }
-
 
 async fn fetch_data_from_es() -> Result<serde_json::Value, reqwest::Error> {
     let client = build_client()?;
     let query = build_query();
     send_request(&client, &query).await
 }
-
-
 
 #[derive(Serialize)] // We're using the serde crate's Serialize trait to help with CSV writing
 struct EventThree {
@@ -100,10 +99,10 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
                 if let Some(agent_id) = hit["_source"]["agent"]["id"].as_str() {
                     entry.agent_id = Some(agent_id.to_string());
                 }
-                
+
                 for part in message.split('\n') {
                     let segments: Vec<_> = part.splitn(2, ':').collect();
-                    println!("{:?}", segments);  // Debug prints
+                    println!("{:?}", segments); // Debug prints
                     if segments.len() == 2 {
                         let key = segments[0].trim();
                         let value = segments[1].trim();
@@ -120,7 +119,7 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
                         }
                     }
                 }
-                
+
                 entries.push(entry);
             }
         }
@@ -140,19 +139,18 @@ fn write_to_csv(entries: Vec<EventThree>, filename: &str) -> std::io::Result<()>
     Ok(())
 }
 
-
 #[tokio::main]
 async fn main() {
     match fetch_data_from_es().await {
         Ok(data) => {
             let entries = parse_output(&data);
-            
+
             // Write the parsed data to a CSV file
             if let Err(e) = write_to_csv(entries, "C:/Users/samsung/Downloads/csvfiles/event14_regobjjrename_joe_pc_20230808_1200.csv") {
             // if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event14_regobjjrename_joe_pc_20230808_1200.csv") {
                 eprintln!("Error writing to CSV: {:?}", e);
             }
-        },
+        }
         Err(err) => {
             eprintln!("Error: {:?}", err);
         }
