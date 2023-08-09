@@ -30,6 +30,7 @@ fn build_query(event_code: &str) -> serde_json::Value {
     "bool": {
     "must": [
     { "match": {"event.code": event_code} },
+    { "match": {"event.module": "sysmon"} },
     { "range": {"@timestamp": {"lt": TIMESTAMP}} }
     ]
     }
@@ -164,8 +165,8 @@ impl EventToCSV for EventOne {
         entries
     }
 
-fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
-    let mut wtr = csv::WriterBuilder::new()
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
+        let mut wtr = csv::WriterBuilder::new()
             .delimiter(b'\t')
             .from_path(filename)?;
         for entry in entries {
@@ -183,6 +184,7 @@ impl EventToCSV for EventTwo {
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
                 if let Some(message) = hit["_source"]["message"].as_str() {
+                    println!("EventTwo raw message: {}", message);
                     let mut entry = EventTwo {
                         agent_name: None,
                         agent_id: None,
@@ -254,17 +256,23 @@ async fn main() {
     for event_code in &["1", "2"] {
         match fetch_data_from_es(event_code).await {
             Ok(datas) => {
-                let filename = format!("/path/to/your/csvfiles/event{}_output.csv", event_code);
+                let filename = format!("/Users/dong-ju/Downloads/elacsv/event{}_logs.csv", event_code);
+                
+                println!("Raw data for event code {}: {:?}", event_code, datas);
+
                 for data in &datas {
                     match event_code.as_ref() {
                         "1" => {
                             let entries = EventOne::parse(data);
+                            println!("Number of entries for event code {}: {}", event_code, entries.len()); // <-- Inserted line
                             if let Err(e) = EventOne::write_to_csv(&entries, &filename) {
                                 eprintln!("Error writing to CSV: {:?}", e);
                             }
                         }
                         "2" => {
                             let entries = EventTwo::parse(data);
+                            // println!("First few entries for event code {}: {:?}", event_code, &entries[..std::cmp::min(5, entries.len())]);
+                            println!("Number of entries for event code {}: {}", event_code, entries.len()); // <-- Inserted line
                             if let Err(e) = EventTwo::write_to_csv(&entries, &filename) {
                                 eprintln!("Error writing to CSV: {:?}", e);
                             }

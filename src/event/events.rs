@@ -29,7 +29,7 @@ pub struct EventOne {
     pub parent_user: Option<String>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct EventTwo {
     pub agent_name: Option<String>,
     pub agent_id: Option<String>,
