@@ -124,7 +124,9 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
 }
 
 fn write_to_csv(entries: Vec<EventThree>, filename: &str) -> std::io::Result<()> {
-    let mut wtr = Writer::from_path(filename)?;
+    let mut wtr = csv::WriterBuilder::new()
+        .delimiter(b'\t') // Set the delimiter to tab
+        .from_path(filename)?;
     for entry in entries {
         wtr.serialize(entry)?;
     }
@@ -140,8 +142,8 @@ async fn main() {
             let entries = parse_output(&data);
             
             // Write the parsed data to a CSV file
-            // if let Err(e) = write_to_csv(entries, "C:/Users/spdlq/Dropbox/EINSIS/03. CODE/files/event1_processcreate.csv") {
-            if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event25_processtampering_joe_pc_20230808_1200.csv") {
+            if let Err(e) = write_to_csv(entries, "C:/Users/samsung/Downloads/csvfiles/event25_processtampering_joe_pc_20230808_1200.csv") {
+            // if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event25_processtampering_joe_pc_20230808_1200.csv") {
                 eprintln!("Error writing to CSV: {:?}", e);
             }
         },
