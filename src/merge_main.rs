@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 // External imports
 use reqwest::header;
 use serde_json::json;
