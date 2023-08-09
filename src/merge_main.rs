@@ -1,18 +1,22 @@
+// External imports
 use reqwest::header;
 use serde_json::json;
 use tokio;
-mod env;
-use env::{ES_URL, ID, INDICES, PW, SIZE, TIMESTAMP};
-mod event;
-use event::events::{EventOne, EventTwo};
-// Constants
 
+// Internal module imports
+mod env;
+mod event;
+
+// Constants & utility imports
+use env::{ES_URL, ID, INDICES, PW, SIZE, TIMESTAMP};
+use event::events::{EventOne, EventTwo};
+
+// Functions
 fn build_client() -> Result<reqwest::Client, reqwest::Error> {
-    let auth_value = format!("{}:{}", ID, PW);
-    let basic_auth_header = format!("Basic {}", base64::encode(auth_value));
+    let basic_auth_header = format!("Basic {}", base64::encode(format!("{}:{}", ID, PW)));
 
     reqwest::Client::builder()
-        .danger_accept_invalid_certs(true) // Bypass SSL verification (not recommended for production!)
+        .danger_accept_invalid_certs(true)
         .default_headers({
             let mut headers = header::HeaderMap::new();
             headers.insert(
@@ -26,16 +30,16 @@ fn build_client() -> Result<reqwest::Client, reqwest::Error> {
 
 fn build_query(event_code: &str) -> serde_json::Value {
     json!({
-    "query": {
-    "bool": {
-    "must": [
-    { "match": {"event.code": event_code} },
-    { "match": {"event.module": "sysmon"} },
-    { "range": {"@timestamp": {"lt": TIMESTAMP}} }
-    ]
-    }
-    },
-    "size": SIZE
+        "query": {
+            "bool": {
+                "must": [
+                    { "match": {"event.code": event_code} },
+                    { "match": {"event.module": "sysmon"} },
+                    { "range": {"@timestamp": {"lt": TIMESTAMP}} }
+                ]
+            }
+        },
+        "size": SIZE
     })
 }
 
@@ -44,20 +48,22 @@ async fn send_request(
     query: &serde_json::Value,
     index: &str,
 ) -> Result<serde_json::Value, reqwest::Error> {
-    let url = format!("{}/{}/_search", ES_URL, index);
-    let response = client.post(&url).json(query).send().await?;
-    response.json().await
+    client
+        .post(&format!("{}/{}/_search", ES_URL, index))
+        .json(query)
+        .send()
+        .await?
+        .json()
+        .await
 }
 
 async fn fetch_data_from_es(event_code: &str) -> Result<Vec<serde_json::Value>, reqwest::Error> {
     let client = build_client()?;
-    let query = build_query(event_code); // Use the event_code parameter to build the query
-
-    // Iterate over each index, send a request, and collect the results
+    let query = build_query(event_code);
     let mut all_results = Vec::new();
+
     for index in INDICES.iter() {
-        let result = send_request(&client, &query, index).await?;
-        all_results.push(result);
+        all_results.push(send_request(&client, &query, index).await?);
     }
 
     Ok(all_results)
@@ -113,7 +119,7 @@ impl EventToCSV for EventOne {
 
                     for part in message.split('\n') {
                         let segments: Vec<_> = part.splitn(2, ':').collect();
-                        println!("{:?}", segments); // Debug prints
+                        // println!("{:?}", segments); // Debug prints
                         if segments.len() == 2 {
                             let key = segments[0].trim();
                             let value = segments[1].trim();
@@ -184,7 +190,7 @@ impl EventToCSV for EventTwo {
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
                 if let Some(message) = hit["_source"]["message"].as_str() {
-                    println!("EventTwo raw message: {}", message);
+                    // println!("EventTwo raw message: {}", message);
                     let mut entry = EventTwo {
                         agent_name: None,
                         agent_id: None,
@@ -209,7 +215,7 @@ impl EventToCSV for EventTwo {
 
                     for part in message.split('\n') {
                         let segments: Vec<_> = part.splitn(2, ':').collect();
-                        println!("{:?}", segments); // Debug prints
+                        // println!("{:?}", segments); // Debug prints
                         if segments.len() == 2 {
                             let key = segments[0].trim();
                             let value = segments[1].trim();
@@ -253,37 +259,32 @@ impl EventToCSV for EventTwo {
 
 #[tokio::main]
 async fn main() {
-    for event_code in &["1", "2"] {
+    for &event_code in &["1", "2"] {
         match fetch_data_from_es(event_code).await {
             Ok(datas) => {
-                let filename = format!("/Users/dong-ju/Downloads/elacsv/event{}_logs.csv", event_code);
-                
-                println!("Raw data for event code {}: {:?}", event_code, datas);
+                let filename = format!(
+                    "/Users/dong-ju/Downloads/elacsv/event{}_logs.csv",
+                    event_code
+                );
+                // println!("Raw data for event code {}: {:?}", event_code, datas);
 
                 for data in &datas {
-                    match event_code.as_ref() {
-                        "1" => {
-                            let entries = EventOne::parse(data);
-                            println!("Number of entries for event code {}: {}", event_code, entries.len()); // <-- Inserted line
-                            if let Err(e) = EventOne::write_to_csv(&entries, &filename) {
-                                eprintln!("Error writing to CSV: {:?}", e);
-                            }
-                        }
-                        "2" => {
-                            let entries = EventTwo::parse(data);
-                            // println!("First few entries for event code {}: {:?}", event_code, &entries[..std::cmp::min(5, entries.len())]);
-                            println!("Number of entries for event code {}: {}", event_code, entries.len()); // <-- Inserted line
-                            if let Err(e) = EventTwo::write_to_csv(&entries, &filename) {
-                                eprintln!("Error writing to CSV: {:?}", e);
-                            }
-                        }
+                    match event_code {
+                        "1" => process_event_data::<EventOne>(data, &filename),
+                        "2" => process_event_data::<EventTwo>(data, &filename),
                         _ => continue,
                     };
                 }
             }
-            Err(err) => {
-                eprintln!("Error: {:?}", err);
-            }
+            Err(err) => eprintln!("Error: {:?}", err),
         }
+    }
+}
+
+fn process_event_data<T: EventToCSV>(data: &serde_json::Value, filename: &str) {
+    let entries = T::parse(data);
+    println!("Number of entries: {}", entries.len());
+    if let Err(e) = T::write_to_csv(&entries, filename) {
+        eprintln!("Error writing to CSV: {:?}", e);
     }
 }
