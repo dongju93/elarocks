@@ -79,3 +79,7 @@ path = "src/rocks.rs"
 [[bin]]
 name = "select"
 path = "src/select.rs"
+
+[[bin]]
+name = "merge"
+path = "src/merge_main.rs"

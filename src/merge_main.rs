@@ -1,12 +1,10 @@
-use csv::Writer;
 use reqwest::header;
-use serde::Serialize;
 use serde_json::json;
 use tokio;
 mod env;
 use env::{ES_URL, ID, INDICES, PW, SIZE, TIMESTAMP};
-mod events;
-use events::{EventOne, EventTwo};
+mod event;
+use event::events::{EventOne, EventTwo};
 // Constants
 
 fn build_client() -> Result<reqwest::Client, reqwest::Error> {
@@ -64,9 +62,9 @@ async fn fetch_data_from_es(event_code: &str) -> Result<Vec<serde_json::Value>, 
     Ok(all_results)
 }
 
-trait EventToCSV {
-    fn parse(data: &serde_json::Value) -> Self;
-    fn write_to_csv(&self, filename: &str) -> std::io::Result<()>;
+trait EventToCSV: Sized {
+    fn parse(data: &serde_json::Value) -> Vec<Self>;
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()>;
 }
 
 impl EventToCSV for EventOne {
@@ -166,8 +164,8 @@ impl EventToCSV for EventOne {
         entries
     }
 
-    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
-        let mut wtr = csv::WriterBuilder::new()
+fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
+    let mut wtr = csv::WriterBuilder::new()
             .delimiter(b'\t')
             .from_path(filename)?;
         for entry in entries {

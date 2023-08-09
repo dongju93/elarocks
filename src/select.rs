@@ -1,4 +1,4 @@
-use rocksdb::{DBIterator, IteratorMode, Options, DB};
+use rocksdb::{IteratorMode, DB};
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {

@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 #[derive(Serialize)]
 pub struct EventOne {
     pub agent_name: Option<String>,

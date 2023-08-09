@@ -1,4 +1,4 @@
-use csv::Writer;
+
 use reqwest::header;
 use serde::Serialize;
 use serde_json::json;

@@ -1,4 +1,3 @@
-use csv::Writer;
 use reqwest::header;
 use serde::Serialize;
 use serde_json::json;
@@ -13,7 +12,8 @@ const SIZE: usize = 10000000;
 
 fn build_client() -> Result<reqwest::Client, reqwest::Error> {
     let auth_value = format!("{}:{}", ID, PW);
-    let basic_auth_header = format!("Basic {}", base64::encode(auth_value));
+    let encoded = base64::encode(&auth_value);
+    let basic_auth_header = format!("Basic {}", encoded);
 
     reqwest::Client::builder()
         .danger_accept_invalid_certs(true) // Bypass SSL verification (not recommended for production!)
