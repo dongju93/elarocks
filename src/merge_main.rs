@@ -10,8 +10,8 @@ mod env;
 mod event;
 
 // Constants & utility imports
-use env::{ES_URL, ID, INDICES, PW, SIZE, TIMESTAMP};
-use event::events::{EventOne, EventTwo};
+use env::{ES_URL, ID, INDICES, PW, SIZE, TIMESTAMP, SAVELOCATION, CSV};
+use event::events::{Event1, Event2};
 
 // Functions
 fn build_client() -> Result<reqwest::Client, reqwest::Error> {
@@ -76,14 +76,14 @@ trait EventToCSV: Sized {
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()>;
 }
 
-impl EventToCSV for EventOne {
+impl EventToCSV for Event1 {
     fn parse(data: &serde_json::Value) -> Vec<Self> {
         let mut entries = Vec::new();
 
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
                 if let Some(message) = hit["_source"]["message"].as_str() {
-                    let mut entry = EventOne {
+                    let mut entry = Event1 {
                         agent_name: None,
                         agent_id: None,
                         event_action: Some("Process Create".to_string()),
@@ -185,15 +185,15 @@ impl EventToCSV for EventOne {
     }
 }
 
-impl EventToCSV for EventTwo {
+impl EventToCSV for Event2 {
     fn parse(data: &serde_json::Value) -> Vec<Self> {
         let mut entries = Vec::new();
 
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
                 if let Some(message) = hit["_source"]["message"].as_str() {
-                    // println!("EventTwo raw message: {}", message);
-                    let mut entry = EventTwo {
+                    // println!("Event2 raw message: {}", message);
+                    let mut entry = Event2 {
                         agent_name: None,
                         agent_id: None,
                         event_action: Some("File creation time changed".to_string()),
@@ -265,15 +265,16 @@ async fn main() {
         match fetch_data_from_es(event_code).await {
             Ok(datas) => {
                 let filename = format!(
-                    "/Users/dong-ju/Downloads/elacsv/event{}_logs.csv",
-                    event_code
+                    "{}{}{}", SAVELOCATION,
+                    event_code,
+                    CSV
                 );
                 // println!("Raw data for event code {}: {:?}", event_code, datas);
 
                 for data in &datas {
                     match event_code {
-                        "1" => process_event_data::<EventOne>(data, &filename),
-                        "2" => process_event_data::<EventTwo>(data, &filename),
+                        "1" => process_event_data::<Event1>(data, &filename),
+                        "2" => process_event_data::<Event2>(data, &filename),
                         _ => continue,
                     };
                 }

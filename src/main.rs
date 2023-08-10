@@ -3,12 +3,10 @@ use serde::Serialize;
 use serde_json::json;
 use tokio;
 mod env;
-use env::{ES_URL, ID, INDEX, PW};
+use env::{ES_URL, ID, INDEX, PW, TIMESTAMP, SIZE};
 
 // Constants
 const EVENT_CODE: &str = "1";
-const TIMESTAMP: &str = "2023-08-08T03:00:00.000Z";
-const SIZE: usize = 10000000;
 
 fn build_client() -> Result<reqwest::Client, reqwest::Error> {
     let auth_value = format!("{}:{}", ID, PW);
