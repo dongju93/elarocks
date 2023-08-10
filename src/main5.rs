@@ -76,7 +76,7 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
                 let mut entry = EventThree {
                     agent_name: None,
                     agent_id: None,
-                    event_action: Some("Network connection detected".to_string()),
+                    event_action: Some("Process terminated".to_string()),
                     utc_time: None,
                     process_guid: None,
                     process_id: None,
