@@ -1,15 +1,12 @@
-
 use reqwest::header;
-use serde::Serialize;
 use serde_json::json;
 use tokio;
-mod env;
-use env::{ES_URL, ID, INDEX, PW};
+
+use crate::envs::env::*;
+use crate::structs::events::Event15;
 
 // Constants
 const EVENT_CODE: &str = "15";
-const TIMESTAMP: &str = "2023-08-08T03:00:00.000Z";
-const SIZE: usize = 10000000;
 
 fn build_client() -> Result<reqwest::Client, reqwest::Error> {
     let auth_value = format!("{}:{}", ID, PW);
@@ -57,29 +54,13 @@ async fn fetch_data_from_es() -> Result<serde_json::Value, reqwest::Error> {
     send_request(&client, &query).await
 }
 
-#[derive(Serialize)] // We're using the serde crate's Serialize trait to help with CSV writing
-struct EventThree {
-    agent_name: Option<String>,
-    agent_id: Option<String>,
-    event_action: Option<String>,
-    utc_time: Option<String>,
-    process_guid: Option<String>,
-    process_id: Option<String>,
-    image: Option<String>,
-    target_filename: Option<String>,
-    creation_utc_time: Option<String>,
-    hash: Option<String>,
-    contents: Option<String>,
-    user: Option<String>,
-}
-
-fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
+fn parse_output(data: &serde_json::Value) -> Vec<Event15> {
     let mut entries = Vec::new();
 
     if let Some(hits) = data["hits"]["hits"].as_array() {
         for hit in hits {
             if let Some(message) = hit["_source"]["message"].as_str() {
-                let mut entry = EventThree {
+                let mut entry = Event15 {
                     agent_name: None,
                     agent_id: None,
                     event_action: Some("File stream created".to_string()),
@@ -131,7 +112,7 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
     entries
 }
 
-fn write_to_csv(entries: Vec<EventThree>, filename: &str) -> std::io::Result<()> {
+fn write_to_csv(entries: Vec<Event15>, filename: &str) -> std::io::Result<()> {
     let mut wtr = csv::WriterBuilder::new()
         .delimiter(b'\t') // Set the delimiter to tab
         .from_path(filename)?;

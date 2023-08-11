@@ -1,15 +1,12 @@
-
 use reqwest::header;
-use serde::Serialize;
 use serde_json::json;
 use tokio;
-mod env;
-use env::{ES_URL, ID, INDEX, PW};
+
+use crate::envs::env::*;
+use crate::structs::events::Event13;
 
 // Constants
-const EVENT_CODE: &str = "3";
-const TIMESTAMP: &str = "2023-08-08T03:00:00.000Z";
-const SIZE: usize = 10000000;
+const EVENT_CODE: &str = "13";
 
 fn build_client() -> Result<reqwest::Client, reqwest::Error> {
     let auth_value = format!("{}:{}", ID, PW);
@@ -57,57 +54,24 @@ async fn fetch_data_from_es() -> Result<serde_json::Value, reqwest::Error> {
     send_request(&client, &query).await
 }
 
-#[derive(Serialize)] // We're using the serde crate's Serialize trait to help with CSV writing
-struct EventThree {
-    agent_name: Option<String>,
-    agent_id: Option<String>,
-    event_action: Option<String>,
-    utc_time: Option<String>,
-    process_guid: Option<String>,
-    process_id: Option<String>,
-    image: Option<String>,
-    user: Option<String>,
-    initiated: Option<String>,
-    protocol: Option<String>,
-    source_is_ipv6: Option<String>,
-    source_ip: Option<String>,
-    source_hostname: Option<String>,
-    source_port: Option<String>,
-    source_port_name: Option<String>,
-    destination_is_ipv6: Option<String>,
-    destination_ip: Option<String>,
-    destination_hostname: Option<String>,
-    destination_port: Option<String>,
-    destination_port_name: Option<String>,
-}
-
-fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
+fn parse_output(data: &serde_json::Value) -> Vec<Event13> {
     let mut entries = Vec::new();
 
     if let Some(hits) = data["hits"]["hits"].as_array() {
         for hit in hits {
             if let Some(message) = hit["_source"]["message"].as_str() {
-                let mut entry = EventThree {
+                let mut entry = Event13 {
                     agent_name: None,
                     agent_id: None,
-                    event_action: Some("Network connection detected".to_string()),
+                    event_action: Some("Registry value set".to_string()),
+                    event_type: None,
                     utc_time: None,
                     process_guid: None,
                     process_id: None,
                     image: None,
+                    target_object: None,
+                    details: None,
                     user: None,
-                    protocol: None,
-                    initiated: None,
-                    source_is_ipv6: None,
-                    source_ip: None,
-                    source_hostname: None,
-                    source_port: None,
-                    source_port_name: None,
-                    destination_is_ipv6: None,
-                    destination_ip: None,
-                    destination_hostname: None,
-                    destination_port: None,
-                    destination_port_name: None,
                 };
 
                 if let Some(agent_name) = hit["_source"]["agent"]["name"].as_str() {
@@ -125,29 +89,14 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
                         let key = segments[0].trim();
                         let value = segments[1].trim();
                         match key {
+                            "EventType" => entry.event_type = Some(value.to_string()),
                             "UtcTime" => entry.utc_time = Some(value.to_string()),
                             "ProcessGuid" => entry.process_guid = Some(value.to_string()),
                             "ProcessId" => entry.process_id = Some(value.to_string()),
                             "Image" => entry.image = Some(value.to_string()),
-                            "User" => entry.image = Some(value.to_string()),
-                            "Protocol" => entry.protocol = Some(value.to_string()),
-                            "Initiated" => entry.initiated = Some(value.to_string()),
-                            "SourceIsIpv6" => entry.source_is_ipv6 = Some(value.to_string()),
-                            "SourceIp" => entry.source_ip = Some(value.to_string()),
-                            "SourceHostname" => entry.source_hostname = Some(value.to_string()),
-                            "SourcePort" => entry.source_port = Some(value.to_string()),
-                            "SourcePortName" => entry.source_port_name = Some(value.to_string()),
-                            "DestinationIsIpv6" => {
-                                entry.destination_is_ipv6 = Some(value.to_string())
-                            }
-                            "DestinationIp" => entry.destination_ip = Some(value.to_string()),
-                            "DestinationHostname" => {
-                                entry.destination_hostname = Some(value.to_string())
-                            }
-                            "DestinationPort" => entry.destination_port = Some(value.to_string()),
-                            "DestinationPortName" => {
-                                entry.destination_port_name = Some(value.to_string())
-                            }
+                            "TargetObject" => entry.target_object = Some(value.to_string()),
+                            "Details" => entry.details = Some(value.to_string()),
+                            "User" => entry.user = Some(value.to_string()),
                             _ => {}
                         }
                     }
@@ -161,7 +110,7 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
     entries
 }
 
-fn write_to_csv(entries: Vec<EventThree>, filename: &str) -> std::io::Result<()> {
+fn write_to_csv(entries: Vec<Event13>, filename: &str) -> std::io::Result<()> {
     let mut wtr = csv::WriterBuilder::new()
         .delimiter(b'\t') // Set the delimiter to tab
         .from_path(filename)?;
@@ -176,14 +125,14 @@ fn write_to_csv(entries: Vec<EventThree>, filename: &str) -> std::io::Result<()>
 async fn main() {
     match fetch_data_from_es().await {
         Ok(data) => {
-            let entries: Vec<EventThree> = parse_output(&data);
+            let entries = parse_output(&data);
 
             // Write the parsed data to a CSV file
             if let Err(e) = write_to_csv(
                 entries,
-                "C:/Users/samsung/Downloads/csvfiles/event3_networkconn_joe_pc_20230808_1200.csv",
+                "C:/Users/samsung/Downloads/csvfiles/event13_regvalueset_joe_pc_20230808_1200.csv",
             ) {
-                // if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event3_networkconn_joe_pc_20230808_1200.csv") {
+                // if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event13_regvalueset_joe_pc_20230808_1200.csv") {
                 eprintln!("Error writing to CSV: {:?}", e);
             }
         }

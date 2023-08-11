@@ -1,15 +1,12 @@
-
 use reqwest::header;
-use serde::Serialize;
 use serde_json::json;
 use tokio;
-mod env;
-use env::{ES_URL, ID, INDEX, PW};
+
+use crate::envs::env::*;
+use crate::structs::events::event17_pipecreated_joe_pc_20230808_1200;
 
 // Constants
-const EVENT_CODE: &str = "22";
-const TIMESTAMP: &str = "2023-08-08T03:00:00.000Z";
-const SIZE: usize = 10000000;
+const EVENT_CODE: &str = "17";
 
 fn build_client() -> Result<reqwest::Client, reqwest::Error> {
     let auth_value = format!("{}:{}", ID, PW);
@@ -57,37 +54,21 @@ async fn fetch_data_from_es() -> Result<serde_json::Value, reqwest::Error> {
     send_request(&client, &query).await
 }
 
-#[derive(Serialize)] // We're using the serde crate's Serialize trait to help with CSV writing
-struct EventThree {
-    agent_name: Option<String>,
-    agent_id: Option<String>,
-    event_action: Option<String>,
-    utc_time: Option<String>,
-    process_guid: Option<String>,
-    process_id: Option<String>,
-    query_name: Option<String>,
-    query_status: Option<String>,
-    query_results: Option<String>,
-    image: Option<String>,
-    user: Option<String>,
-}
-
-fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
+fn parse_output(data: &serde_json::Value) -> Vec<Event17> {
     let mut entries = Vec::new();
 
     if let Some(hits) = data["hits"]["hits"].as_array() {
         for hit in hits {
             if let Some(message) = hit["_source"]["message"].as_str() {
-                let mut entry = EventThree {
+                let mut entry = Event17 {
                     agent_name: None,
                     agent_id: None,
-                    event_action: Some("Dns query".to_string()),
+                    event_action: Some("Pipe Created".to_string()),
+                    event_type: None,
                     utc_time: None,
                     process_guid: None,
                     process_id: None,
-                    query_name: None,
-                    query_status: None,
-                    query_results: None,
+                    pipe_name: None,
                     image: None,
                     user: None,
                 };
@@ -107,12 +88,11 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
                         let key = segments[0].trim();
                         let value = segments[1].trim();
                         match key {
+                            "EventType" => entry.event_type = Some(value.to_string()),
                             "UtcTime" => entry.utc_time = Some(value.to_string()),
                             "ProcessGuid" => entry.process_guid = Some(value.to_string()),
                             "ProcessId" => entry.process_id = Some(value.to_string()),
-                            "QueryName" => entry.query_name = Some(value.to_string()),
-                            "QueryStatus" => entry.query_status = Some(value.to_string()),
-                            "QueryResults" => entry.query_results = Some(value.to_string()),
+                            "PipeName" => entry.pipe_name = Some(value.to_string()),
                             "Image" => entry.image = Some(value.to_string()),
                             "User" => entry.user = Some(value.to_string()),
                             _ => {}
@@ -128,7 +108,7 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
     entries
 }
 
-fn write_to_csv(entries: Vec<EventThree>, filename: &str) -> std::io::Result<()> {
+fn write_to_csv(entries: Vec<Event17>, filename: &str) -> std::io::Result<()> {
     let mut wtr = csv::WriterBuilder::new()
         .delimiter(b'\t') // Set the delimiter to tab
         .from_path(filename)?;
@@ -148,9 +128,9 @@ async fn main() {
             // Write the parsed data to a CSV file
             if let Err(e) = write_to_csv(
                 entries,
-                "C:/Users/samsung/Downloads/csvfiles/event7_imageloaded_joe_pc_20230808_1200.csv",
+                "C:/Users/samsung/Downloads/csvfiles/event17_pipecreated_joe_pc_20230808_1200.csv",
             ) {
-                // if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event22_dnsquery_joe_pc_20230808_1200.csv") {
+                // if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event17_pipecreated_joe_pc_20230808_1200.csv") {
                 eprintln!("Error writing to CSV: {:?}", e);
             }
         }

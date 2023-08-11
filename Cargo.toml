@@ -3,8 +3,6 @@ name = "elarocks"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 serde_json = "1.0.104"
 tokio = {version="1.29.1", features=["full"]}
@@ -21,65 +19,65 @@ name = "main"
 path = "src/main.rs"
 
 [[bin]]
+name = "main1"
+path = "src/byEvents/main1.rs"
+
+[[bin]]
 name = "main2"
-path = "src/main2.rs"
+path = "src/byEvents/main2.rs"
 
 [[bin]]
 name = "main3"
-path = "src/main3.rs"
+path = "src/byEvents/main3.rs"
 
 [[bin]]
 name = "main5"
-path = "src/main5.rs"
+path = "src/byEvents/main5.rs"
 
 [[bin]]
 name = "main7"
-path = "src/main7.rs"
+path = "src/byEvents/main7.rs"
 
 [[bin]]
 name = "main11"
-path = "src/main11.rs"
+path = "src/byEvents/main11.rs"
 
 [[bin]]
 name = "main13"
-path = "src/main13.rs"
+path = "src/byEvents/main13.rs"
 
 [[bin]]
 name = "main14"
-path = "src/main14.rs"
+path = "src/byEvents/main14.rs"
 
 [[bin]]
 name = "main15"
-path = "src/main15.rs"
+path = "src/byEvents/main15.rs"
 
 [[bin]]
 name = "main17"
-path = "src/main17.rs"
+path = "src/byEvents/main17.rs"
 
 [[bin]]
 name = "main22"
-path = "src/main22.rs"
+path = "src/byEvents/main22.rs"
 
 [[bin]]
 name = "main23"
-path = "src/main23.rs"
+path = "src/byEvents/main23.rs"
 
 [[bin]]
 name = "main25"
-path = "src/main25.rs"
+path = "src/byEvents/main25.rs"
 
 [[bin]]
 name = "main26"
-path = "src/main26.rs"
+path = "src/byEvents/main26.rs"
 
 [[bin]]
 name = "rocks"
-path = "src/rocks.rs"
+path = "src/ground/rocks.rs"
 
 [[bin]]
 name = "select"
-path = "src/select.rs"
-
-[[bin]]
-name = "merge"
-path = "src/merge_main.rs"
+path = "src/ground/select.rs"

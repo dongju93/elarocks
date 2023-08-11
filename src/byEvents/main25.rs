@@ -1,13 +1,12 @@
-
 use reqwest::header;
-use serde::Serialize;
 use serde_json::json;
 use tokio;
-mod env;
-use env::{ES_URL, ID, INDEX, PW, TIMESTAMP, SIZE};
 
-const EVENT_CODE: &str = "5";
+use crate::envs::env::*;
+use crate::structs::events::Event25;
 
+// Constants
+const EVENT_CODE: &str = "25";
 
 fn build_client() -> Result<reqwest::Client, reqwest::Error> {
     let auth_value = format!("{}:{}", ID, PW);
@@ -55,32 +54,21 @@ async fn fetch_data_from_es() -> Result<serde_json::Value, reqwest::Error> {
     send_request(&client, &query).await
 }
 
-#[derive(Serialize)] // We're using the serde crate's Serialize trait to help with CSV writing
-struct EventThree {
-    agent_name: Option<String>,
-    agent_id: Option<String>,
-    event_action: Option<String>,
-    utc_time: Option<String>,
-    process_guid: Option<String>,
-    process_id: Option<String>,
-    image: Option<String>,
-    user: Option<String>,
-}
-
-fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
+fn parse_output(data: &serde_json::Value) -> Vec<Event25> {
     let mut entries = Vec::new();
 
     if let Some(hits) = data["hits"]["hits"].as_array() {
         for hit in hits {
             if let Some(message) = hit["_source"]["message"].as_str() {
-                let mut entry = EventThree {
+                let mut entry = Event25 {
                     agent_name: None,
                     agent_id: None,
-                    event_action: Some("Process terminated".to_string()),
+                    event_action: Some("Process Tampering,".to_string()),
                     utc_time: None,
                     process_guid: None,
                     process_id: None,
                     image: None,
+                    types: None,
                     user: None,
                 };
 
@@ -103,6 +91,7 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
                             "ProcessGuid" => entry.process_guid = Some(value.to_string()),
                             "ProcessId" => entry.process_id = Some(value.to_string()),
                             "Image" => entry.image = Some(value.to_string()),
+                            "Type" => entry.types = Some(value.to_string()),
                             "User" => entry.user = Some(value.to_string()),
                             _ => {}
                         }
@@ -117,7 +106,7 @@ fn parse_output(data: &serde_json::Value) -> Vec<EventThree> {
     entries
 }
 
-fn write_to_csv(entries: Vec<EventThree>, filename: &str) -> std::io::Result<()> {
+fn write_to_csv(entries: Vec<Event25>, filename: &str) -> std::io::Result<()> {
     let mut wtr = csv::WriterBuilder::new()
         .delimiter(b'\t') // Set the delimiter to tab
         .from_path(filename)?;
@@ -135,11 +124,8 @@ async fn main() {
             let entries = parse_output(&data);
 
             // Write the parsed data to a CSV file
-            if let Err(e) = write_to_csv(
-                entries,
-                "C:/Users/samsung/Downloads/csvfiles/event5_processtermi_joe_pc_20230808_1200.csv",
-            ) {
-                // if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event5_processtermi_joe_pc_20230808_1200.csv") {
+            if let Err(e) = write_to_csv(entries, "C:/Users/samsung/Downloads/csvfiles/event25_processtampering_joe_pc_20230808_1200.csv") {
+            // if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event25_processtampering_joe_pc_20230808_1200.csv") {
                 eprintln!("Error writing to CSV: {:?}", e);
             }
         }
