@@ -7,7 +7,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let db = DB::open_default("/Users/dong-ju/Documents/My_code/elarocks/db")?;
 
     // Read CSV data with column names
-    let csv_path = "/Users/dong-ju/Documents/My_code/elarocks/file/event1_processcreate.csv";
+    let csv_path = "/Users/dong-ju/Documents/My_code/elarocks/file/event1_logs.csv";
     let mut rdr = ReaderBuilder::new().has_headers(true).from_path(csv_path)?;
 
     // Start a write batch for bulk writes
