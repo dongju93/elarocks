@@ -6,7 +6,7 @@ Second, this code will extract data to CSV files with delimiter "\t"
 
 it's parsing "message" field with "agent.name", "agent.id" field
 
-may required maximum size of query size, default is 10000
+may required modify maximum size of search query, default is 10000
 ```
 // replace with your Index name
 PUT /.ds-winlogbeat-8.8.2-2023.08.06-000001/_settings
