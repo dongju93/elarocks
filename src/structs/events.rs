@@ -1,5 +1,6 @@
 use serde::Serialize;
 
+// Sysmon structs with each evnet.code
 #[derive(Serialize)]
 pub struct Event1 {
     pub agent_name: Option<String>,
@@ -201,7 +202,7 @@ pub struct Event23 {
     pub process_id: Option<String>,
     pub user: Option<String>,
     pub image: Option<String>,
-    pub target_Filename: Option<String>,
+    pub target_filename: Option<String>,
     pub hashes: Option<String>,
     pub is_executable: Option<String>,
     pub archived: Option<String>,

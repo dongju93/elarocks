@@ -1,6 +1,7 @@
 use rocksdb::{IteratorMode, DB};
 use std::error::Error;
 
+// Show selected Keys with Values within RocksDB
 fn main() -> Result<(), Box<dyn Error>> {
     // Open the RocksDB database
     let db = DB::open_default("/Users/dong-ju/Documents/My_code/elarocks/db")?;

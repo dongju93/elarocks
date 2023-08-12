@@ -2,6 +2,9 @@
 name = "elarocks"
 version = "0.1.0"
 edition = "2021"
+authors = ["Joe <joe@cluml.com>"]
+readme = "README.md"
+repository = "https://github.com/dongju93/elarocks"
 
 [dependencies]
 serde_json = "1.0.104"

@@ -2,6 +2,8 @@ use csv::ReaderBuilder;
 use rocksdb::{WriteBatch, WriteOptions, DB};
 use std::error::Error;
 
+// read csv files and save to RocksDB
+// needs optimize code and Keys
 fn main() -> Result<(), Box<dyn Error>> {
     // Open or create a RocksDB database
     let db = DB::open_default("/Users/dong-ju/Documents/My_code/elarocks/db")?;

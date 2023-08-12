@@ -1,58 +1,21 @@
-use reqwest::header;
-use serde_json::json;
+#![allow(deprecated)]
+
+// External Dependecys, import through Cargo.toml
 use tokio;
 
-use crate::envs::env::*;
-use crate::structs::events::Event13;
+// Import Enviroments with secrect key (settings)
+#[path = "../envs/mod.rs"]
+mod envs;
+// Import Sysmon event structs
+#[path = "../structs/mod.rs"]
+mod structs;
 
-// Constants
-const EVENT_CODE: &str = "13";
+// use Imports
+use envs::env::*;
+use envs::byEventsEnv::*;
+use structs::events::Event13;
 
-fn build_client() -> Result<reqwest::Client, reqwest::Error> {
-    let auth_value = format!("{}:{}", ID, PW);
-    let basic_auth_header = format!("Basic {}", base64::encode(auth_value));
-
-    reqwest::Client::builder()
-        .danger_accept_invalid_certs(true) // Bypass SSL verification (not recommended for production!)
-        .default_headers({
-            let mut headers = header::HeaderMap::new();
-            headers.insert(
-                header::AUTHORIZATION,
-                header::HeaderValue::from_str(&basic_auth_header).unwrap(),
-            );
-            headers
-        })
-        .build()
-}
-
-fn build_query() -> serde_json::Value {
-    json!({
-        "query": {
-            "bool": {
-              "must": [
-                { "match": {"event.code": EVENT_CODE} },
-                { "range": {"@timestamp": {"lt": TIMESTAMP}} }
-              ]
-            }
-          },
-          "size": SIZE
-    })
-}
-
-async fn send_request(
-    client: &reqwest::Client,
-    query: &serde_json::Value,
-) -> Result<serde_json::Value, reqwest::Error> {
-    let url = format!("{}/{}/_search", ES_URL, INDEX);
-    let response = client.post(&url).json(query).send().await?;
-    response.json().await
-}
-
-async fn fetch_data_from_es() -> Result<serde_json::Value, reqwest::Error> {
-    let client = build_client()?;
-    let query = build_query();
-    send_request(&client, &query).await
-}
+const EVENT_CODE: &str = EVE_CODE;
 
 fn parse_output(data: &serde_json::Value) -> Vec<Event13> {
     let mut entries = Vec::new();
@@ -84,7 +47,7 @@ fn parse_output(data: &serde_json::Value) -> Vec<Event13> {
 
                 for part in message.split('\n') {
                     let segments: Vec<_> = part.splitn(2, ':').collect();
-                    println!("{:?}", segments); // Debug prints
+                    // println!("{:?}", segments); // Debug prints
                     if segments.len() == 2 {
                         let key = segments[0].trim();
                         let value = segments[1].trim();
@@ -112,7 +75,7 @@ fn parse_output(data: &serde_json::Value) -> Vec<Event13> {
 
 fn write_to_csv(entries: Vec<Event13>, filename: &str) -> std::io::Result<()> {
     let mut wtr = csv::WriterBuilder::new()
-        .delimiter(b'\t') // Set the delimiter to tab
+        .delimiter(b'\t') 
         .from_path(filename)?;
     for entry in entries {
         wtr.serialize(entry)?;
@@ -126,13 +89,8 @@ async fn main() {
     match fetch_data_from_es().await {
         Ok(data) => {
             let entries = parse_output(&data);
-
-            // Write the parsed data to a CSV file
-            if let Err(e) = write_to_csv(
-                entries,
-                "C:/Users/samsung/Downloads/csvfiles/event13_regvalueset_joe_pc_20230808_1200.csv",
-            ) {
-                // if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event13_regvalueset_joe_pc_20230808_1200.csv") {
+            let filenames = format!("{}{}{}", SAVELOCATION, EVENT_CODE, CSVNAME);
+            if let Err(e) = write_to_csv(entries, &filenames) {
                 eprintln!("Error writing to CSV: {:?}", e);
             }
         }

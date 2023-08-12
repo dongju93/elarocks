@@ -1,60 +1,21 @@
-use reqwest::header;
-use serde_json::json;
+#![allow(deprecated)]
+
+// External Dependecys, import through Cargo.toml
 use tokio;
 
-use crate::envs::env::*;
-use crate::structs::events::Event1;
+// Import Enviroments with secrect key (settings)
+#[path = "../envs/mod.rs"]
+mod envs;
+// Import Sysmon event structs
+#[path = "../structs/mod.rs"]
+mod structs;
 
-// Constants
-const EVENT_CODE: &str = "1";
+// use Imports
+use envs::env::*;
+use envs::byEventsEnv::*;
+use structs::events::Event1;
 
-fn build_client() -> Result<reqwest::Client, reqwest::Error> {
-    let auth_value = format!("{}:{}", ID, PW);
-    let basic_auth_header = format!("Basic {}", base64::encode(auth_value));
-
-    reqwest::Client::builder()
-        .danger_accept_invalid_certs(true) // Bypass SSL verification (not recommended for production!)
-        .default_headers({
-            let mut headers = header::HeaderMap::new();
-            headers.insert(
-                header::AUTHORIZATION,
-                header::HeaderValue::from_str(&basic_auth_header).unwrap(),
-            );
-            headers
-        })
-        .build()
-}
-
-fn build_query() -> serde_json::Value {
-    json!({
-        "query": {
-            "bool": {
-                "must": [
-                    { "match": {"event.code": EVENT_CODE} },
-                    { "match": {"event.module": "sysmon"} },
-                    { "range": {"@timestamp": {"gt": TIMESTAMP_STA, "lt": TIMESTAMP}} },
-                    // {"wildcard": {"message": "*h4ki032*"}}
-                ]
-            }
-        },
-          "size": SIZE
-    })
-}
-
-async fn send_request(
-    client: &reqwest::Client,
-    query: &serde_json::Value,
-) -> Result<serde_json::Value, reqwest::Error> {
-    let url = format!("{}/{}/_search", ES_URL, INDEX);
-    let response = client.post(&url).json(query).send().await?;
-    response.json().await
-}
-
-async fn fetch_data_from_es() -> Result<serde_json::Value, reqwest::Error> {
-    let client = build_client()?;
-    let query = build_query();
-    send_request(&client, &query).await
-}
+const EVENT_CODE: &str = EVE_CODE;
 
 fn parse_output(data: &serde_json::Value) -> Vec<Event1> {
     let mut entries = Vec::new();
@@ -150,7 +111,7 @@ fn parse_output(data: &serde_json::Value) -> Vec<Event1> {
 
 fn write_to_csv(entries: Vec<Event1>, filename: &str) -> std::io::Result<()> {
     let mut wtr = csv::WriterBuilder::new()
-        .delimiter(b'\t') // Set the delimiter to tab
+        .delimiter(b'\t')
         .from_path(filename)?;
     for entry in entries {
         wtr.serialize(entry)?;
@@ -165,12 +126,7 @@ async fn main() {
         Ok(data) => {
             let entries = parse_output(&data);
             let filenames = format!("{}{}{}", SAVELOCATION, EVENT_CODE, CSVNAME);
-            // Write the parsed data to a CSV file
-            if let Err(e) = write_to_csv(
-                entries,
-                &filenames,
-            ) {
-                // if let Err(e) = write_to_csv(entries, "/Users/dong-ju/Dropbox/EINSIS/03. CODE/files/event1_processcreate_joe_pc_20230808_1200.csv") {
+            if let Err(e) = write_to_csv(entries, &filenames) {
                 eprintln!("Error writing to CSV: {:?}", e);
             }
         }

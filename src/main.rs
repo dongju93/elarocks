@@ -1,19 +1,22 @@
 #![allow(deprecated)]
 
-// External imports
+// External Dependecys, import through Cargo.toml
 use reqwest::header;
 use serde_json::json;
 use tokio;
 
-// Internal module imports
+// Import Enviroments with secrect key (settings)
+#[path = "envs/mod.rs"]
 mod envs;
+// Import Sysmon event structs
+#[path = "structs/mod.rs"]
 mod structs;
 
-// Constants & utility imports
+// use Imports
 use envs::env::*;
 use structs::events::*;
 
-// Functions
+// Elasticearch client connection with bypass SSL (works with https)
 fn build_client() -> Result<reqwest::Client, reqwest::Error> {
     let basic_auth_header = format!("Basic {}", base64::encode(format!("{}:{}", ID, PW)));
 
@@ -30,6 +33,7 @@ fn build_client() -> Result<reqwest::Client, reqwest::Error> {
         .build()
 }
 
+// Modify query
 fn build_query(event_code: &str) -> serde_json::Value {
     json!({
         "query": {
@@ -46,6 +50,7 @@ fn build_query(event_code: &str) -> serde_json::Value {
     })
 }
 
+// Send query with "_search" option
 async fn send_request(
     client: &reqwest::Client,
     query: &serde_json::Value,
@@ -60,6 +65,7 @@ async fn send_request(
         .await
 }
 
+// Query multiple Index with event_code
 async fn fetch_data_from_es(event_code: &str) -> Result<Vec<serde_json::Value>, reqwest::Error> {
     let client = build_client()?;
     let query = build_query(event_code);
@@ -72,11 +78,13 @@ async fn fetch_data_from_es(event_code: &str) -> Result<Vec<serde_json::Value>, 
     Ok(all_results)
 }
 
+// A common interface for a group of types.
 trait EventToCSV: Sized {
     fn parse(data: &serde_json::Value) -> Vec<Self>;
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()>;
 }
 
+// Parse json(response data) and make .csv files
 impl EventToCSV for Event1 {
     fn parse(data: &serde_json::Value) -> Vec<Self> {
         let mut entries = Vec::new();
@@ -949,7 +957,7 @@ impl EventToCSV for Event23 {
                         process_id: None,
                         user: None,
                         image: None,
-                        target_Filename: None,
+                        target_filename: None,
                         hashes: None,
                         is_executable: None,
                         archived: None,
@@ -975,7 +983,7 @@ impl EventToCSV for Event23 {
                                 "ProcessId" => entry.process_id = Some(value.to_string()),
                                 "User" => entry.user = Some(value.to_string()),
                                 "Image" => entry.image = Some(value.to_string()),
-                                "TargetFilename" => entry.target_Filename = Some(value.to_string()),
+                                "TargetFilename" => entry.target_filename = Some(value.to_string()),
                                 "Hashes" => entry.hashes = Some(value.to_string()),
                                 "IsExecutable" => entry.is_executable = Some(value.to_string()),
                                 "Archived" => entry.archived = Some(value.to_string()),
@@ -1140,6 +1148,7 @@ impl EventToCSV for Event26 {
     }
 }
 
+// Excute functions with argumentss
 #[tokio::main]
 async fn main() {
     for &event_code in &[
@@ -1176,6 +1185,7 @@ async fn main() {
     }
 }
 
+// Printout counts each events
 fn process_event_data<T: EventToCSV>(data: &serde_json::Value, filename: &str) {
     let entries = T::parse(data);
     println!("Number of entries: {}", entries.len());

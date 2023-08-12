@@ -1,12 +1,22 @@
+#![allow(dead_code)]
+
 use super::elastic::*;
 
-pub const ES_URL: &str = ES_URLs;
-pub const ID: &str = IDs;
-pub const PW: &str = PWs;
-pub const INDEX: &str = ".ds-winlogbeat-8.8.2-2023.08.06-000001";
+// SECRET information
+pub const ES_URL: &str = ES_URL_SECRET;
+pub const ID: &str = ID_SECRET;
+pub const PW: &str = PW_SECRET;
+
+// INDICES for src/main.rs
 pub const INDICES: [&str; 1] = [".ds-winlogbeat-8.8.2-2023.08.06-000001"];
-pub const TIMESTAMP: &str = "2023-08-10T00:00:00.000Z";
-pub const TIMESTAMP_STA: &str = "2023-08-11T00:00:00.000Z";
+
+// Search start and end timestamp
+pub const TIMESTAMP_STA: &str = "2023-08-09T00:00:00.000Z";
+pub const TIMESTAMP: &str = "2023-08-12T00:00:00.000Z";
+
+// Query size
 pub const SIZE: usize = 1000;
-pub const SAVELOCATION: &str = "/Users/dong-ju/Documents/My_code/elarocks/file/event";
+
+// File save location
+pub const SAVELOCATION: &str = "/Users/dong-ju/Documents/My_code/elarocks/file/temp/event";
 pub const CSVNAME: &str = "_logs.csv";
