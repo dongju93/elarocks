@@ -6,10 +6,8 @@ use serde_json::json;
 use tokio;
 
 // Import Enviroments with secrect key (settings)
-#[path = "envs/mod.rs"]
 mod envs;
 // Import Sysmon event structs
-#[path = "structs/mod.rs"]
 mod structs;
 
 // use Imports
@@ -1158,7 +1156,7 @@ async fn main() {
             Ok(datas) => {
                 let filename = format!("{}{}{}", SAVELOCATION, event_code, CSVNAME);
                 // println!("Raw data for event code {}: {:?}", event_code, datas);
-
+                println!("Event {}", event_code);
                 for data in &datas {
                     match event_code {
                         "1" => process_event_data::<Event1>(data, &filename),
@@ -1188,7 +1186,7 @@ async fn main() {
 // Printout counts each events
 fn process_event_data<T: EventToCSV>(data: &serde_json::Value, filename: &str) {
     let entries = T::parse(data);
-    println!("Number of entries: {}", entries.len());
+    println!("Data counts(Max: {}): {}\n", SIZE, entries.len());
     if let Err(e) = T::write_to_csv(&entries, filename) {
         eprintln!("Error writing to CSV: {:?}", e);
     }

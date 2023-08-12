@@ -1,11 +1,12 @@
 Elasticsearch data to .csv file
 ===
 
-collect SYSMON data with WINLOGBEAT and stored with ELASTICSEARCH and extract data to CSV files with delimiter "\t"
+First, you need collect [SYSMON](https://learn.microsoft.com/ko-kr/sysinternals/downloads/sysmon) data with [WINLOGBEAT](https://www.elastic.co/kr/beats/winlogbeat) and stored with [ELASTICSEARCH](https://www.elastic.co/kr/elasticsearch)   
+Second, this code will extract data to CSV files with delimiter "\t"
 
 it's parsing "message" field with "agent.name", "agent.id" field
 
-may required maximum size of query size, default size is 10000
+may required maximum size of query size, default is 10000
 ```
 // replace with your Index name
 PUT /.ds-winlogbeat-8.8.2-2023.08.06-000001/_settings
