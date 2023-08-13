@@ -15,7 +15,8 @@ use envs::env::*;
 use envs::byEventsEnv::*;
 use structs::events::Event26;
 
-const EVENT_CODE: &str = EVE_CODE;
+// const EVENT_CODE: &str = EVE_CODE;
+const EVENT_CODE: &str = "26";
 
 fn parse_output(data: &serde_json::Value) -> Vec<Event26> {
     let mut entries = Vec::new();

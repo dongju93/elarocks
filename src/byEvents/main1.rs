@@ -15,7 +15,8 @@ use envs::env::*;
 use envs::byEventsEnv::*;
 use structs::events::Event1;
 
-const EVENT_CODE: &str = EVE_CODE;
+// const EVENT_CODE: &str = EVE_CODE;
+const EVENT_CODE: &str = "1";
 
 fn parse_output(data: &serde_json::Value) -> Vec<Event1> {
     let mut entries = Vec::new();
@@ -61,7 +62,7 @@ fn parse_output(data: &serde_json::Value) -> Vec<Event1> {
 
                 for part in message.split('\n') {
                     let segments: Vec<_> = part.splitn(2, ':').collect();
-                    println!("{:?}", segments); // Debug prints
+                    // println!("{:?}", segments); // Debug prints
                     if segments.len() == 2 {
                         let key = segments[0].trim();
                         let value = segments[1].trim();

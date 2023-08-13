@@ -5,8 +5,12 @@ use serde_json::json;
 use reqwest::header;
 
 // change EVE_CODE to exact byEvents number
-pub const EVE_CODE: &str = "1";
 pub const INDEX: &str = ".ds-winlogbeat-8.8.2-2023.08.06-000001";
+const EVE_CODE: &str = "2";
+
+// change TIMESTAMP if needed
+// const TIMESTAMP_STA: &str = "2023-08-01T00:00:00.000Z";
+// const TIMESTAMP: &str = "2023-08-01T00:00:00.000Z";
 
 pub fn build_query() -> serde_json::Value {
     json!({

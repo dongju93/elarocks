@@ -16,10 +16,15 @@ serde ={version = "1.0.182", features = ["derive"]}
 rocksdb = "0.21.0"
 csv = "1.2.2"
 chrono = "0.4.26"
+once_cell = "1.7"
 
 [[bin]]
 name = "main"
 path = "src/main.rs"
+
+[[bin]]
+name = "events"
+path = "src/byEvents/main_byEvents.rs"
 
 [[bin]]
 name = "main1"
