@@ -316,7 +316,7 @@ impl EventToCSV for Event3 {
                                 "ProcessGuid" => entry.process_guid = Some(value.to_string()),
                                 "ProcessId" => entry.process_id = Some(value.to_string()),
                                 "Image" => entry.image = Some(value.to_string()),
-                                "User" => entry.image = Some(value.to_string()),
+                                "User" => entry.user = Some(value.to_string()),
                                 "Protocol" => entry.protocol = Some(value.to_string()),
                                 "Initiated" => entry.initiated = Some(value.to_string()),
                                 "SourceIsIpv6" => entry.source_is_ipv6 = Some(value.to_string()),
