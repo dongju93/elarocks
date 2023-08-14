@@ -1,9 +1,0 @@
-pub const INDEX:&str = ".ds-winlogbeat-8.8.1-2023.07.19-000001";
-pub const ES_URL:&str = "http://localhost:9200";
-pub const ID:&str = "elastic";
-pub const PW:&str = "elastic";
-pub const INDICES:[&str; 1] = [".ds-winlogbeat-8.8.1-2023.08.10-000001"];
-pub const TIMESTAMP: &str = "2023-08-10T03:00:00.000Z";
-pub const SIZE: usize = 100;
-pub const SAVELOCATION: &str = "C:/Users/spdlq/Dropbox/EINSIS/03. CODE/event";
-pub const CSV: &str = "_logs.csv";
