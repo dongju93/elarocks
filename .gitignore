@@ -7,3 +7,4 @@ Cargo.lock
 .vscode
 auto.bat
 auto.sh
+/vendor
