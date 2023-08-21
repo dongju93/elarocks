@@ -4,34 +4,34 @@ use std::net::IpAddr;
 
 // EVENT 1
 struct ProcessCreateEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
     image: String,
-    file_version: Option<String>,
-    description: Option<String>,
-    product: Option<String>,
-    company: Option<String>,
-    original_file_name: Option<String>,
-    command_line: Option<String>,
-    current_directory: Option<String>,
+    file_version: String,
+    description: String,
+    product: String,
+    company: String,
+    original_file_name: String,
+    command_line: String,
+    current_directory: String,
     user: String,
-    logon_guid: Option<String>,
-    logon_id: Option<u32>,
-    terminal_session_id: Option<u32>,
-    integrity_level: Option<String>,
-    hashes: Option<String>,
-    parent_process_guid: Option<String>,
-    parent_process_id: Option<u32>,
-    parent_image: Option<String>,
-    parent_command_line: Option<String>,
-    parent_user: Option<String>,
+    logon_guid: String,
+    logon_id: u32,
+    terminal_session_id: u32,
+    integrity_level: String,
+    hashes: String,
+    parent_process_guid: String,
+    parent_process_id: u32,
+    parent_image: String,
+    parent_command_line: String,
+    parent_user: String,
 }
 
 // EVENT 2
 struct FileCreateTimeChangedEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -44,7 +44,7 @@ struct FileCreateTimeChangedEvent {
 
 // EVENT 3
 struct NetworkConnectionEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -54,12 +54,12 @@ struct NetworkConnectionEvent {
     initiated: bool,
     source_is_ipv6: bool,
     source_ip: IpAddr,
-    source_hostname: Option<String>,
+    source_hostname: String,
     source_port: u16,
-    source_port_name: Option<String>,
+    source_port_name: String,
     destination_is_ipv6: bool,
     destination_ip: IpAddr,
-    destination_hostname: Option<String>,
+    destination_hostname: String,
     destination_port: u16,
     destination_port_name: String,
 }
@@ -74,7 +74,7 @@ struct SysmonServiceStateChangeEvent {
 
 // EVENT 5
 struct ProcessTerminatedEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -84,28 +84,28 @@ struct ProcessTerminatedEvent {
 
 // EVENT 6
 struct DriverLoadedEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     utc_time: DateTime<Utc>,
     image_loaded: String,
     hashes: String,
     signed: bool,
-    signature: Option<String>,
-    signature_status: Option<String>,
+    signature: String,
+    signature_status: String,
 }
 
 // EVENT 7
 struct ImageLoadedEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
     image: String,
     image_loaded: String,
-    file_version: Option<String>,
-    description: Option<String>,
-    product: Option<String>,
-    company: Option<String>,
-    original_file_name: Option<String>,
+    file_version: String,
+    description: String,
+    product: String,
+    company: String,
+    original_file_name: String,
     hashes: String,
     signed: bool,
     signature: String,
@@ -115,7 +115,7 @@ struct ImageLoadedEvent {
 
 // EVENT 8
 struct CreateRemoteThreadEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     utc_time: DateTime<Utc>,
     source_process_guid: String,
     source_process_id: u32,
@@ -133,7 +133,7 @@ struct CreateRemoteThreadEvent {
 
 // EVENT 9
 struct RawAccessReadEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -144,7 +144,7 @@ struct RawAccessReadEvent {
 
 // EVENT 10
 struct ProcessAccessedEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     utc_time: DateTime<Utc>,
     source_process_guid: String,
     source_process_id: u32,
@@ -161,7 +161,7 @@ struct ProcessAccessedEvent {
 
 // EVENT 11
 struct FileCreatedEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -173,7 +173,7 @@ struct FileCreatedEvent {
 
 // EVENT 12
 struct RegistryObjectAddedOrDeletedEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     event_type: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
@@ -185,7 +185,7 @@ struct RegistryObjectAddedOrDeletedEvent {
 
 // EVENT 13
 struct RegistryValueSetEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     event_type: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
@@ -198,7 +198,7 @@ struct RegistryValueSetEvent {
 
 // EVENT 14
 struct RegistryObjectRenamedEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     event_type: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
@@ -211,7 +211,7 @@ struct RegistryObjectRenamedEvent {
 
 // EVENT 15
 struct FileStreamCreatedEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -232,7 +232,7 @@ struct SysmonConfigStateChangedEvent {
 
 // EVENT 17
 struct PipeCreatedEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     event_type: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
@@ -244,7 +244,7 @@ struct PipeCreatedEvent {
 
 // EVENT 18
 struct PipeConnectedEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     event_type: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
@@ -261,7 +261,7 @@ struct PipeConnectedEvent {
 
 // EVENT 22
 struct DnsQueryEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -274,7 +274,7 @@ struct DnsQueryEvent {
 
 // EVENT 23
 struct FileDeleteArchivedEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -288,7 +288,7 @@ struct FileDeleteArchivedEvent {
 
 // EVENT 24
 struct ClipboardChangedEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -302,7 +302,7 @@ struct ClipboardChangedEvent {
 
 // EVENT 25
 struct ProcessTamperingEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -313,7 +313,7 @@ struct ProcessTamperingEvent {
 
 // EVENT 26
 struct FileDeleteLoggedEvent {
-    rule_name: Option<String>,
+    rule_name: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
