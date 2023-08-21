@@ -64,13 +64,13 @@ struct NetworkConnectionEvent {
     destination_port_name: String,
 }
 
-// EVENT 4
-struct SysmonServiceStateChangeEvent {
-    utc_time: DateTime<Utc>,
-    state: String,
-    version: String,
-    schema_version: String,
-}
+// EVENT 4 : sysmon event 불필요
+// struct SysmonServiceStateChangeEvent {
+//     utc_time: DateTime<Utc>,
+//     state: String,
+//     version: String,
+//     schema_version: String,
+// }
 
 // EVENT 5
 struct ProcessTerminatedEvent {
@@ -223,12 +223,12 @@ struct FileStreamCreatedEvent {
     user: String,
 }
 
-// EVENT 16
-struct SysmonConfigStateChangedEvent {
-    utc_time: DateTime<Utc>,
-    configuration: String,
-    configuration_file_hash: String,
-}
+// EVENT 16 : sysmon event 불필요
+// struct SysmonConfigStateChangedEvent {
+//     utc_time: DateTime<Utc>,
+//     configuration: String,
+//     configuration_file_hash: String,
+// }
 
 // EVENT 17
 struct PipeCreatedEvent {
@@ -254,10 +254,7 @@ struct PipeConnectedEvent {
     user: String,
 }
 
-// EVENT 19
-// EVENT 20
-// EVENT 21
-// 데이터 미생성
+// Event 19, 20, 21 이벤트 미생성
 
 // EVENT 22
 struct DnsQueryEvent {
@@ -323,5 +320,3 @@ struct FileDeleteLoggedEvent {
     hashes: String,
     is_executable: bool,
 }
-
-// ... And so on for each event type ...
