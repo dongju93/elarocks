@@ -273,7 +273,7 @@ impl EventToCSV for Event3 {
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
                 if let Some(message) = hit["_source"]["message"].as_str() {
-                    // println!("Event2 raw message: {}", message);
+                    // println!("Event3 raw message: {}", message);
                     let mut entry = Event3 {
                         agent_name: None,
                         agent_id: None,
@@ -371,7 +371,7 @@ impl EventToCSV for Event5 {
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
                 if let Some(message) = hit["_source"]["message"].as_str() {
-                    // println!("Event2 raw message: {}", message);
+                    // println!("Event5 raw message: {}", message);
                     let mut entry = Event5 {
                         agent_name: None,
                         agent_id: None,
@@ -435,7 +435,7 @@ impl EventToCSV for Event7 {
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
                 if let Some(message) = hit["_source"]["message"].as_str() {
-                    // println!("Event2 raw message: {}", message);
+                    // println!("Event7 raw message: {}", message);
                     let mut entry = Event7 {
                         agent_name: None,
                         agent_id: None,
@@ -523,11 +523,11 @@ impl EventToCSV for Event9 {
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
                 if let Some(message) = hit["_source"]["message"].as_str() {
-                    // println!("Event2 raw message: {}", message);
+                    // println!("Event9 raw message: {}", message);
                     let mut entry = Event9 {
                         agent_name: None,
                         agent_id: None,
-                        event_action: Some("Image loaded".to_string()),
+                        event_action: Some("RawAccessRead detected".to_string()),
                         utc_time: None,
                         process_guid: None,
                         process_id: None,
@@ -589,7 +589,7 @@ impl EventToCSV for Event11 {
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
                 if let Some(message) = hit["_source"]["message"].as_str() {
-                    // println!("Event2 raw message: {}", message);
+                    // println!("Event11 raw message: {}", message);
                     let mut entry = Event11 {
                         agent_name: None,
                         agent_id: None,
@@ -659,7 +659,7 @@ impl EventToCSV for Event13 {
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
                 if let Some(message) = hit["_source"]["message"].as_str() {
-                    // println!("Event2 raw message: {}", message);
+                    // println!("Event13 raw message: {}", message);
                     let mut entry = Event13 {
                         agent_name: None,
                         agent_id: None,
@@ -729,7 +729,7 @@ impl EventToCSV for Event14 {
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
                 if let Some(message) = hit["_source"]["message"].as_str() {
-                    // println!("Event2 raw message: {}", message);
+                    // println!("Event14 raw message: {}", message);
                     let mut entry = Event14 {
                         agent_name: None,
                         agent_id: None,
@@ -799,7 +799,7 @@ impl EventToCSV for Event15 {
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
                 if let Some(message) = hit["_source"]["message"].as_str() {
-                    // println!("Event2 raw message: {}", message);
+                    // println!("Event15 raw message: {}", message);
                     let mut entry = Event15 {
                         agent_name: None,
                         agent_id: None,
@@ -873,7 +873,7 @@ impl EventToCSV for Event17 {
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
                 if let Some(message) = hit["_source"]["message"].as_str() {
-                    // println!("Event2 raw message: {}", message);
+                    // println!("Event17 raw message: {}", message);
                     let mut entry = Event17 {
                         agent_name: None,
                         agent_id: None,
@@ -941,7 +941,7 @@ impl EventToCSV for Event22 {
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
                 if let Some(message) = hit["_source"]["message"].as_str() {
-                    // println!("Event2 raw message: {}", message);
+                    // println!("Event22 raw message: {}", message);
                     let mut entry = Event22 {
                         agent_name: None,
                         agent_id: None,
@@ -1011,7 +1011,7 @@ impl EventToCSV for Event23 {
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
                 if let Some(message) = hit["_source"]["message"].as_str() {
-                    // println!("Event2 raw message: {}", message);
+                    // println!("Event23 raw message: {}", message);
                     let mut entry = Event23 {
                         agent_name: None,
                         agent_id: None,
@@ -1083,7 +1083,7 @@ impl EventToCSV for Event25 {
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
                 if let Some(message) = hit["_source"]["message"].as_str() {
-                    // println!("Event2 raw message: {}", message);
+                    // println!("Event25 raw message: {}", message);
                     let mut entry = Event25 {
                         agent_name: None,
                         agent_id: None,
@@ -1149,7 +1149,7 @@ impl EventToCSV for Event26 {
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
                 if let Some(message) = hit["_source"]["message"].as_str() {
-                    // println!("Event2 raw message: {}", message);
+                    // println!("Event26 raw message: {}", message);
                     let mut entry = Event26 {
                         agent_name: None,
                         agent_id: None,
@@ -1230,7 +1230,7 @@ async fn main() {
                         "3" => process_event_data::<Event3>(data, &filename),
                         "5" => process_event_data::<Event5>(data, &filename),
                         "7" => process_event_data::<Event7>(data, &filename),
-                        "9" => process_event_data::<Event7>(data, &filename),
+                        "9" => process_event_data::<Event9>(data, &filename),
                         "11" => process_event_data::<Event11>(data, &filename),
                         "13" => process_event_data::<Event13>(data, &filename),
                         "14" => process_event_data::<Event14>(data, &filename),
