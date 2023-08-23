@@ -516,6 +516,72 @@ impl EventToCSV for Event7 {
     }
 }
 
+impl EventToCSV for Event9 {
+    fn parse(data: &serde_json::Value) -> Vec<Self> {
+        let mut entries = Vec::new();
+
+        if let Some(hits) = data["hits"]["hits"].as_array() {
+            for hit in hits {
+                if let Some(message) = hit["_source"]["message"].as_str() {
+                    // println!("Event2 raw message: {}", message);
+                    let mut entry = Event9 {
+                        agent_name: None,
+                        agent_id: None,
+                        event_action: Some("Image loaded".to_string()),
+                        utc_time: None,
+                        process_guid: None,
+                        process_id: None,
+                        image: None,
+                        device: None,
+                        user: None,
+                    };
+
+                    if let Some(agent_name) = hit["_source"]["agent"]["name"].as_str() {
+                        entry.agent_name = Some(agent_name.to_string());
+                    }
+
+                    if let Some(agent_id) = hit["_source"]["agent"]["id"].as_str() {
+                        entry.agent_id = Some(agent_id.to_string());
+                    }
+
+                    for part in message.split('\n') {
+                        let segments: Vec<_> = part.splitn(2, ':').collect();
+                        // println!("{:?}", segments); // Debug prints
+                        if segments.len() == 2 {
+                            let key = segments[0].trim();
+                            let value = segments[1].trim();
+                            match key {
+                                "UtcTime" => entry.utc_time = Some(value.to_string()),
+                                "ProcessGuid" => entry.process_guid = Some(value.to_string()),
+                                "ProcessId" => entry.process_id = Some(value.to_string()),
+                                "Image" => entry.image = Some(value.to_string()),
+                                "Device" => entry.device = Some(value.to_string()),
+                                "User" => entry.user = Some(value.to_string()),
+                                _ => {}
+                            }
+                        }
+                    }
+
+                    entries.push(entry);
+                }
+            }
+        }
+
+        entries
+    }
+
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
+        let mut wtr = csv::WriterBuilder::new()
+            .delimiter(b'\t')
+            .from_path(filename)?;
+        for entry in entries {
+            wtr.serialize(entry)?;
+        }
+        wtr.flush()?;
+        Ok(())
+    }
+}
+
 impl EventToCSV for Event11 {
     fn parse(data: &serde_json::Value) -> Vec<Self> {
         let mut entries = Vec::new();
@@ -1150,7 +1216,7 @@ impl EventToCSV for Event26 {
 #[tokio::main]
 async fn main() {
     for &event_code in &[
-        "1", "2", "3", "5", "7", "11", "13", "14", "15", "17", "22", "23", "25", "26",
+        "1", "2", "3", "5", "7", "9", "11", "13", "14", "15", "17", "22", "23", "25", "26",
     ] {
         match fetch_data_from_es(event_code).await {
             Ok(datas) => {
@@ -1164,6 +1230,7 @@ async fn main() {
                         "3" => process_event_data::<Event3>(data, &filename),
                         "5" => process_event_data::<Event5>(data, &filename),
                         "7" => process_event_data::<Event7>(data, &filename),
+                        "9" => process_event_data::<Event7>(data, &filename),
                         "11" => process_event_data::<Event11>(data, &filename),
                         "13" => process_event_data::<Event13>(data, &filename),
                         "14" => process_event_data::<Event14>(data, &filename),
