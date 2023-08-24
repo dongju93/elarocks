@@ -15,7 +15,7 @@ PUT /.ds-winlogbeat-8.8.2-2023.08.06-000001/_settings
 }
 ```
 
-Please refer to the footnote in the code for detailed explanation
+Please refer to the comments in the code for detailed explanation
 
 ## Quickstart
 1. you need create "elastic.rs" files, located "/src/envs"
