@@ -21,18 +21,18 @@ Please refer to the comments in the code for detailed explanation
 1. You need to create "elastic.rs" files, located "/src/envs"
 - /src/envs/elasric.rs
 ```
-pub const ES_URL_SECRET: &str = "YOURE ELASTICSEARCH URL";
-pub const ID_SECRET: &str = "YOURE ELASTICSEARCH USERNAME (default is elaseic)";
-pub const PW_SECRET: &str = "YOURE ELASTICSEARCH PASSWORD";
+pub const ES_URL_SECRET: &str = "YOUR ELASTICSEARCH URL";
+pub const ID_SECRET: &str = "YOUR ELASTICSEARCH USERNAME (default is elaseic)";
+pub const PW_SECRET: &str = "YOUR ELASTICSEARCH PASSWORD";
 ```
 2. You need set your index name, the name may start with ".ds-winlogbeat" if you setup winlogbeat to elasticsearch automatically
 and if index is multiple, set numbers and write index names within array
 - /src/envs/env.rs
 ```
-pub const INDICES: [&str; 1] = ["YOURE INDEX NAME"];
+pub const INDICES: [&str; 1] = ["YOUR INDEX NAME"];
 
 // if you have three indexes
-pub const INDICES: [&str; 3] = ["YOURE INDEX NAME 1", "YOURE INDEX NAME 2", "YOURE INDEX NAME 3"];
+pub const INDICES: [&str; 3] = ["YOUR INDEX NAME 1", "YOUR INDEX NAME 2", "YOUR INDEX NAME 3"];
 ```
 3. Set timestamp, query size, save location
 - /src/envs/env.rs
