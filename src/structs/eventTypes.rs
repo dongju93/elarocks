@@ -1,37 +1,43 @@
 extern crate chrono;
 use chrono::{DateTime, Utc};
 use std::net::IpAddr;
+use serde::{Deserialize, Serialize};
 
 // EVENT 1
-struct ProcessCreateEvent {
-    rule_name: String,
-    utc_time: DateTime<Utc>,
-    process_guid: String,
-    process_id: u32,
-    image: String,
-    file_version: String,
-    description: String,
-    product: String,
-    company: String,
-    original_file_name: String,
-    command_line: String,
-    current_directory: String,
-    user: String,
-    logon_guid: String,
-    logon_id: u32,
-    terminal_session_id: u32,
-    integrity_level: String,
-    hashes: String,
-    parent_process_guid: String,
-    parent_process_id: u32,
-    parent_image: String,
-    parent_command_line: String,
-    parent_user: String,
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ProcessCreateEvent {
+    pub agent_name: String,
+    pub agent_id: String,
+    pub event_action: String,
+    pub utc_time: DateTime<Utc>,
+    pub process_guid: String,
+    pub process_id: u32,
+    pub image: String,
+    pub file_version: String,
+    pub description: String,
+    pub product: String,
+    pub company: String,
+    pub original_file_name: String,
+    pub command_line: String,
+    pub current_directory: String,
+    pub user: String,
+    pub logon_guid: String,
+    pub logon_id: u32,
+    pub terminal_session_id: u32,
+    pub integrity_level: String,
+    pub hashes: String,
+    pub parent_process_guid: String,
+    pub parent_process_id: u32,
+    pub parent_image: String,
+    pub parent_command_line: String,
+    pub parent_user: String,
 }
 
 // EVENT 2
 struct FileCreateTimeChangedEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -44,7 +50,9 @@ struct FileCreateTimeChangedEvent {
 
 // EVENT 3
 struct NetworkConnectionEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -74,7 +82,9 @@ struct NetworkConnectionEvent {
 
 // EVENT 5
 struct ProcessTerminatedEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -84,7 +94,9 @@ struct ProcessTerminatedEvent {
 
 // EVENT 6
 struct DriverLoadedEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     utc_time: DateTime<Utc>,
     image_loaded: String,
     hashes: String,
@@ -95,7 +107,9 @@ struct DriverLoadedEvent {
 
 // EVENT 7
 struct ImageLoadedEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -115,7 +129,9 @@ struct ImageLoadedEvent {
 
 // EVENT 8
 struct CreateRemoteThreadEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     utc_time: DateTime<Utc>,
     source_process_guid: String,
     source_process_id: u32,
@@ -133,7 +149,9 @@ struct CreateRemoteThreadEvent {
 
 // EVENT 9
 struct RawAccessReadEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -144,7 +162,9 @@ struct RawAccessReadEvent {
 
 // EVENT 10
 struct ProcessAccessedEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     utc_time: DateTime<Utc>,
     source_process_guid: String,
     source_process_id: u32,
@@ -161,7 +181,9 @@ struct ProcessAccessedEvent {
 
 // EVENT 11
 struct FileCreatedEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -173,7 +195,9 @@ struct FileCreatedEvent {
 
 // EVENT 12
 struct RegistryObjectAddedOrDeletedEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     event_type: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
@@ -184,21 +208,26 @@ struct RegistryObjectAddedOrDeletedEvent {
 }
 
 // EVENT 13
-struct RegistryValueSetEvent {
-    rule_name: String,
-    event_type: String,
-    utc_time: DateTime<Utc>,
-    process_guid: String,
-    process_id: u32,
-    image: String,
-    target_object: String,
-    details: String,
-    user: String,
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RegistryValueSetEvent {
+    pub agent_name: String,
+    pub agent_id: String,
+    pub event_action: String,
+    pub event_type: String,
+    pub utc_time: DateTime<Utc>,
+    pub process_guid: String,
+    pub process_id: u32,
+    pub image: String,
+    pub target_object: String,
+    pub details: String,
+    pub user: String,
 }
 
 // EVENT 14
 struct RegistryObjectRenamedEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     event_type: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
@@ -211,7 +240,9 @@ struct RegistryObjectRenamedEvent {
 
 // EVENT 15
 struct FileStreamCreatedEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -232,7 +263,9 @@ struct FileStreamCreatedEvent {
 
 // EVENT 17
 struct PipeCreatedEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     event_type: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
@@ -244,7 +277,9 @@ struct PipeCreatedEvent {
 
 // EVENT 18
 struct PipeConnectedEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     event_type: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
@@ -258,7 +293,9 @@ struct PipeConnectedEvent {
 
 // EVENT 22
 struct DnsQueryEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -271,7 +308,9 @@ struct DnsQueryEvent {
 
 // EVENT 23
 struct FileDeleteArchivedEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -285,7 +324,9 @@ struct FileDeleteArchivedEvent {
 
 // EVENT 24
 struct ClipboardChangedEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -299,7 +340,9 @@ struct ClipboardChangedEvent {
 
 // EVENT 25
 struct ProcessTamperingEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,
@@ -310,7 +353,9 @@ struct ProcessTamperingEvent {
 
 // EVENT 26
 struct FileDeleteLoggedEvent {
-    rule_name: String,
+    agent_name: String,
+    agent_id: String,
+    event_action: String,
     utc_time: DateTime<Utc>,
     process_guid: String,
     process_id: u32,

@@ -5,49 +5,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::to_vec;
 use std::error::Error;
 
-#[derive(Serialize, Deserialize, Debug)]
-struct ProcessCreateEvent {
-    agent_name: String,
-    agent_id: String,
-    event_action: String,
-    utc_time: DateTime<Utc>,
-    process_guid: String,
-    process_id: u32,
-    image: String,
-    file_version: String,
-    description: String,
-    product: String,
-    company: String,
-    original_file_name: String,
-    command_line: String,
-    current_directory: String,
-    user: String,
-    logon_guid: String,
-    logon_id: u32,
-    terminal_session_id: u32,
-    integrity_level: String,
-    hashes: String,
-    parent_process_guid: String,
-    parent_process_id: u32,
-    parent_image: String,
-    parent_command_line: String,
-    parent_user: String,
-}
 
-#[derive(Serialize, Deserialize, Debug)]
-struct RegistryValueSetEvent {
-    agent_name: String,
-    agent_id: String,
-    event_action: String,
-    utc_time: DateTime<Utc>,
-    event_type: String,
-    process_guid: String,
-    process_id: u32,
-    image: String,
-    target_object: String,
-    details: String,
-    user: String,
-}
+// Import Sysmon event structs
+#[path = "../structs/mod.rs"]
+mod structs;
+use structs::eventTypes::*;
 
 // read csv files and save to RocksDB
 fn main() -> Result<(), Box<dyn Error>> {
@@ -151,7 +113,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
 
         // Form the key with the counter and serialize the struct
-        let key = format!("{}_{}_{}", event.event_action, event.utc_time, format!("{:05}", counter));
+        let formatted_time = event.utc_time.format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+        let key = format!("{}_{}{}", event.event_action, formatted_time, format!("{:05}", counter));
         let serialized_value = to_vec(&event)?;
 
         // Increment the counter
