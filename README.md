@@ -52,4 +52,12 @@ cargo build
 cargo run --bin main
 ```
 
+* Tip : Checking field types when selecting a wildcard type
+```
+// replace with your Index name
+// When checking the message field type
+GET /.ds-winlogbeat-8.8.2-2023.08.06-000001/_mapping/field/message
+```
+</br>
+
 #### Copyright 2023. ClumL Inc. all rights reserved 

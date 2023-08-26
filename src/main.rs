@@ -37,10 +37,25 @@ fn build_query(event_code: &str) -> serde_json::Value {
         "query": {
             "bool": {
                 "must": [
-                    { "match": {"event.code": event_code} },
-                    { "match": {"event.module": "sysmon"} },
+                    { "term": {"event.code": event_code} },
+                    { "term": {"event.module": "sysmon"} },
                     { "range": {"@timestamp": {"gt": TIMESTAMP_STA, "lt": TIMESTAMP}} },
-                    // {"wildcard": {"message": "*h4ki032*"}}
+                    // Used instead of wildcard when message's type is "match_only_text"
+                    { "query_string": {
+                        "fields": ["message"],
+                        "query": "*cFos* OR *SamsungMagicianSVC*"
+                      }
+                    },
+                    // Using wildcard when message's type is "keyword"
+                    // {
+                    //     "bool": {
+                    //         "should": [
+                    //             { "wildcard": { "message": "*cFos*" } },
+                    //             { "wildcard": { "message": "*SamsungMagicianSVC*" } }
+                    //         ],
+                    //         "minimum_should_match": 1
+                    //     }
+                    // }
                 ]
             }
         },
