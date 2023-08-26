@@ -32,6 +32,8 @@ and if index is multiple, set numbers and write index names within array
 pub const INDICES: [&str; 1] = ["YOUR INDEX NAME"];
 
 // if you have three indexes
+// When the CSV is saved, if the file does not exist, a title line is added as the file is created, and if the file exists, the parsed data rows are added without the title line.
+// To explain further, if you specify multiple indexes, the file will be created from the first index and the data will be added to the file created from the second index.
 pub const INDICES: [&str; 3] = ["YOUR INDEX NAME 1", "YOUR INDEX NAME 2", "YOUR INDEX NAME 3"];
 ```
 3. Set timestamp, query size, save location

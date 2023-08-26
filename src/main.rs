@@ -3,6 +3,8 @@
 // External Dependecys, import through Cargo.toml
 use reqwest::header;
 use serde_json::json;
+use std::fs;
+use std::io;
 use tokio;
 
 // Import Enviroments with secrect key (settings)
@@ -57,15 +59,15 @@ fn build_query(event_code: &str) -> serde_json::Value {
                     //     }
                     // },
                     // Using match_phrase to search between characters
-                    // {
-                    //     "bool": {
-                    //         "should": [
-                    //             { "match_phrase": { "message": "FileExts\\.rmi*" } },
-                    //             { "match_phrase": { "message": "FileExts\\.xml*" } }
-                    //         ],
-                    //         "minimum_should_match": 1
-                    //     }
-                    // },
+                    {
+                        "bool": {
+                            "should": [
+                                { "match_phrase": { "message": "FileExts\\.rmi*" } },
+                                { "match_phrase": { "message": "FileExts\\.xml*" } }
+                            ],
+                            "minimum_should_match": 1
+                        }
+                    },
                 ]
             }
         },
@@ -93,9 +95,10 @@ async fn fetch_data_from_es(event_code: &str) -> Result<Vec<serde_json::Value>, 
     let client = build_client()?;
     let query = build_query(event_code);
     let mut all_results = Vec::new();
-
+    println!("\n");
     for index in INDICES.iter() {
         all_results.push(send_request(&client, &query, index).await?);
+        println!("Index {}", index)
     }
 
     Ok(all_results)
@@ -205,10 +208,22 @@ impl EventToCSV for Event1 {
         entries
     }
 
-    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
-        let mut wtr = csv::WriterBuilder::new()
-            .delimiter(b'\t')
-            .from_path(filename)?;
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -279,10 +294,22 @@ impl EventToCSV for Event2 {
         entries
     }
 
-    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
-        let mut wtr = csv::WriterBuilder::new()
-            .delimiter(b'\t')
-            .from_path(filename)?;
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -377,10 +404,22 @@ impl EventToCSV for Event3 {
         entries
     }
 
-    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
-        let mut wtr = csv::WriterBuilder::new()
-            .delimiter(b'\t')
-            .from_path(filename)?;
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -441,10 +480,22 @@ impl EventToCSV for Event5 {
         entries
     }
 
-    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
-        let mut wtr = csv::WriterBuilder::new()
-            .delimiter(b'\t')
-            .from_path(filename)?;
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -529,10 +580,22 @@ impl EventToCSV for Event7 {
         entries
     }
 
-    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
-        let mut wtr = csv::WriterBuilder::new()
-            .delimiter(b'\t')
-            .from_path(filename)?;
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -595,10 +658,22 @@ impl EventToCSV for Event9 {
         entries
     }
 
-    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
-        let mut wtr = csv::WriterBuilder::new()
-            .delimiter(b'\t')
-            .from_path(filename)?;
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -665,10 +740,22 @@ impl EventToCSV for Event11 {
         entries
     }
 
-    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
-        let mut wtr = csv::WriterBuilder::new()
-            .delimiter(b'\t')
-            .from_path(filename)?;
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -735,10 +822,22 @@ impl EventToCSV for Event13 {
         entries
     }
 
-    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
-        let mut wtr = csv::WriterBuilder::new()
-            .delimiter(b'\t')
-            .from_path(filename)?;
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -805,10 +904,22 @@ impl EventToCSV for Event14 {
         entries
     }
 
-    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
-        let mut wtr = csv::WriterBuilder::new()
-            .delimiter(b'\t')
-            .from_path(filename)?;
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -879,10 +990,22 @@ impl EventToCSV for Event15 {
         entries
     }
 
-    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
-        let mut wtr = csv::WriterBuilder::new()
-            .delimiter(b'\t')
-            .from_path(filename)?;
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -947,10 +1070,22 @@ impl EventToCSV for Event17 {
         entries
     }
 
-    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
-        let mut wtr = csv::WriterBuilder::new()
-            .delimiter(b'\t')
-            .from_path(filename)?;
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -1017,10 +1152,22 @@ impl EventToCSV for Event22 {
         entries
     }
 
-    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
-        let mut wtr = csv::WriterBuilder::new()
-            .delimiter(b'\t')
-            .from_path(filename)?;
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -1089,10 +1236,22 @@ impl EventToCSV for Event23 {
         entries
     }
 
-    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
-        let mut wtr = csv::WriterBuilder::new()
-            .delimiter(b'\t')
-            .from_path(filename)?;
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -1155,10 +1314,22 @@ impl EventToCSV for Event25 {
         entries
     }
 
-    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
-        let mut wtr = csv::WriterBuilder::new()
-            .delimiter(b'\t')
-            .from_path(filename)?;
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -1225,10 +1396,22 @@ impl EventToCSV for Event26 {
         entries
     }
 
-    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()> {
-        let mut wtr = csv::WriterBuilder::new()
-            .delimiter(b'\t')
-            .from_path(filename)?;
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -1265,7 +1448,6 @@ async fn main() {
                         "23" => process_event_data::<Event23>(data, &filename),
                         "25" => process_event_data::<Event25>(data, &filename),
                         "26" => process_event_data::<Event26>(data, &filename),
-
                         _ => continue,
                     };
                 }
@@ -1278,7 +1460,7 @@ async fn main() {
 // Printout counts each events
 fn process_event_data<T: EventToCSV>(data: &serde_json::Value, filename: &str) {
     let entries = T::parse(data);
-    println!("Data counts(Max: {}): {}\n", SIZE, entries.len());
+    println!("Data counts(Max: {}): {}", SIZE, entries.len());
     if let Err(e) = T::write_to_csv(&entries, filename) {
         eprintln!("Error writing to CSV: {:?}", e);
     }
