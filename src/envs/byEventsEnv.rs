@@ -6,7 +6,7 @@ use reqwest::header;
 
 // change EVE_CODE to exact byEvents number
 pub const INDEX: &str = ".ds-winlogbeat-8.8.2-2023.08.06-000001";
-const EVE_CODE: &str = "2";
+const EVE_CODE: &str = "13";
 
 // change TIMESTAMP if needed
 // const TIMESTAMP_STA: &str = "2023-08-01T00:00:00.000Z";
@@ -17,14 +17,39 @@ pub fn build_query() -> serde_json::Value {
         "query": {
             "bool": {
                 "must": [
-                    { "match": {"event.code": EVE_CODE} },
-                    { "match": {"event.module": "sysmon"} },
+                    { "term": {"event.code": EVE_CODE} },
+                    { "term": {"event.module": "sysmon"} },
                     { "range": {"@timestamp": {"gt": TIMESTAMP_STA, "lt": TIMESTAMP}} },
-                    // {"wildcard": {"message": "*h4ki032*"}}
+                    // Used instead of wildcard when message's type is "match_only_text"
+                    // { "query_string": {
+                    //     "fields": ["message"],
+                    //     "query": "\\.rmi"
+                    //   }
+                    // },
+                    // Using wildcard when message's type is "keyword"
+                    // {
+                    //     "bool": {
+                    //         "should": [
+                    //             { "wildcard": { "message": "*.rmi*" } },
+                    //             { "wildcard": { "message": "*.xml*" } }
+                    //         ],
+                    //         "minimum_should_match": 1
+                    //     }
+                    // },
+                    // Using match_phrase to search between characters
+                    // {
+                    //     "bool": {
+                    //         "should": [
+                    //             { "match_phrase": { "message": "FileExts\\.rmi*" } },
+                    //             { "match_phrase": { "message": "FileExts\\.xml*" } }
+                    //         ],
+                    //         "minimum_should_match": 1
+                    //     }
+                    // },
                 ]
             }
         },
-          "size": SIZE
+        "size": SIZE
     })
 }
 

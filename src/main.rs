@@ -41,21 +41,31 @@ fn build_query(event_code: &str) -> serde_json::Value {
                     { "term": {"event.module": "sysmon"} },
                     { "range": {"@timestamp": {"gt": TIMESTAMP_STA, "lt": TIMESTAMP}} },
                     // Used instead of wildcard when message's type is "match_only_text"
-                    { "query_string": {
-                        "fields": ["message"],
-                        "query": "*cFos* OR *SamsungMagicianSVC*"
-                      }
-                    },
+                    // { "query_string": {
+                    //     "fields": ["message"],
+                    //     "query": "\\.rmi"
+                    //   }
+                    // },
                     // Using wildcard when message's type is "keyword"
                     // {
                     //     "bool": {
                     //         "should": [
-                    //             { "wildcard": { "message": "*cFos*" } },
-                    //             { "wildcard": { "message": "*SamsungMagicianSVC*" } }
+                    //             { "wildcard": { "message": "*.rmi*" } },
+                    //             { "wildcard": { "message": "*.xml*" } }
                     //         ],
                     //         "minimum_should_match": 1
                     //     }
-                    // }
+                    // },
+                    // Using match_phrase to search between characters
+                    // {
+                    //     "bool": {
+                    //         "should": [
+                    //             { "match_phrase": { "message": "FileExts\\.rmi*" } },
+                    //             { "match_phrase": { "message": "FileExts\\.xml*" } }
+                    //         ],
+                    //         "minimum_should_match": 1
+                    //     }
+                    // },
                 ]
             }
         },
