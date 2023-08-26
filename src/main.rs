@@ -42,13 +42,13 @@ fn build_query(event_code: &str) -> serde_json::Value {
                     { "term": {"event.code": event_code} },
                     { "term": {"event.module": "sysmon"} },
                     { "range": {"@timestamp": {"gt": TIMESTAMP_STA, "lt": TIMESTAMP}} },
-                    // Used instead of wildcard when message's type is "match_only_text"
+                    // 1. Used instead of wildcard when message's type is "match_only_text"
                     // { "query_string": {
                     //     "fields": ["message"],
-                    //     "query": "\\.rmi"
+                    //     "query": "*cFos* OR *Samsung*"
                     //   }
                     // },
-                    // Using wildcard when message's type is "keyword"
+                    // 2. Using wildcard when message's type is "keyword"
                     // {
                     //     "bool": {
                     //         "should": [
@@ -58,17 +58,34 @@ fn build_query(event_code: &str) -> serde_json::Value {
                     //         "minimum_should_match": 1
                     //     }
                     // },
-                    // Using match_phrase to search between characters
+                    // 3. Using match_phrase to search between characters
+                    // {
+                    //     "bool": {
+                    //         "should": [
+                    //             // { "match_phrase": { "message": "FileExts\\.rmi*" } },
+                    //             { "match_phrase": { "message": "FileExts\\.xml*" } }
+                    //         ],
+                    //         "minimum_should_match": 1
+                    //     }
+                    // },
+                ],
+                // Combind with query_string and match_phrase
+                "should": [
                     {
+                        "query_string": {
+                            "fields": ["message"],
+                            "query": "cFos OR *Samsung*"
+                        }
+                    }, {
                         "bool": {
                             "should": [
-                                { "match_phrase": { "message": "FileExts\\.rmi*" } },
+                                // { "match_phrase": { "message": "FileExts\\.rmi*" } },
                                 { "match_phrase": { "message": "FileExts\\.xml*" } }
-                            ],
-                            "minimum_should_match": 1
+                            ]
                         }
-                    },
-                ]
+                    }
+                ],
+                "minimum_should_match": 1
             }
         },
         "size": SIZE
@@ -209,6 +226,11 @@ impl EventToCSV for Event1 {
     }
 
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
         let file_exists = fs::metadata(filename).is_ok();
         
         let mut wtr = if file_exists {
@@ -295,6 +317,11 @@ impl EventToCSV for Event2 {
     }
 
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
         let file_exists = fs::metadata(filename).is_ok();
         
         let mut wtr = if file_exists {
@@ -405,6 +432,11 @@ impl EventToCSV for Event3 {
     }
 
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
         let file_exists = fs::metadata(filename).is_ok();
         
         let mut wtr = if file_exists {
@@ -481,6 +513,11 @@ impl EventToCSV for Event5 {
     }
 
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
         let file_exists = fs::metadata(filename).is_ok();
         
         let mut wtr = if file_exists {
@@ -581,6 +618,11 @@ impl EventToCSV for Event7 {
     }
 
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
         let file_exists = fs::metadata(filename).is_ok();
         
         let mut wtr = if file_exists {
@@ -659,6 +701,11 @@ impl EventToCSV for Event9 {
     }
 
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
         let file_exists = fs::metadata(filename).is_ok();
         
         let mut wtr = if file_exists {
@@ -741,6 +788,11 @@ impl EventToCSV for Event11 {
     }
 
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
         let file_exists = fs::metadata(filename).is_ok();
         
         let mut wtr = if file_exists {
@@ -823,6 +875,11 @@ impl EventToCSV for Event13 {
     }
 
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
         let file_exists = fs::metadata(filename).is_ok();
         
         let mut wtr = if file_exists {
@@ -905,6 +962,11 @@ impl EventToCSV for Event14 {
     }
 
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
         let file_exists = fs::metadata(filename).is_ok();
         
         let mut wtr = if file_exists {
@@ -991,6 +1053,11 @@ impl EventToCSV for Event15 {
     }
 
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
         let file_exists = fs::metadata(filename).is_ok();
         
         let mut wtr = if file_exists {
@@ -1071,6 +1138,11 @@ impl EventToCSV for Event17 {
     }
 
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
         let file_exists = fs::metadata(filename).is_ok();
         
         let mut wtr = if file_exists {
@@ -1153,6 +1225,11 @@ impl EventToCSV for Event22 {
     }
 
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
         let file_exists = fs::metadata(filename).is_ok();
         
         let mut wtr = if file_exists {
@@ -1237,6 +1314,11 @@ impl EventToCSV for Event23 {
     }
 
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
         let file_exists = fs::metadata(filename).is_ok();
         
         let mut wtr = if file_exists {
@@ -1315,6 +1397,11 @@ impl EventToCSV for Event25 {
     }
 
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
         let file_exists = fs::metadata(filename).is_ok();
         
         let mut wtr = if file_exists {
@@ -1397,6 +1484,11 @@ impl EventToCSV for Event26 {
     }
 
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
         let file_exists = fs::metadata(filename).is_ok();
         
         let mut wtr = if file_exists {
