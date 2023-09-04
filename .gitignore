@@ -8,3 +8,5 @@ Cargo.lock
 auto.bat
 auto.sh
 /vendor
+/graphql/node_modules
+/graphql/package-lock.json
