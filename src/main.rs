@@ -70,22 +70,22 @@ fn build_query(event_code: &str) -> serde_json::Value {
                     // },
                 ],
                 // Combind with query_string and match_phrase
-                "should": [
-                    {
-                        "query_string": {
-                            "fields": ["message"],
-                            "query": "cFos OR *Samsung*"
-                        }
-                    }, {
-                        "bool": {
-                            "should": [
-                                // { "match_phrase": { "message": "FileExts\\.rmi*" } },
-                                { "match_phrase": { "message": "FileExts\\.xml*" } }
-                            ]
-                        }
-                    }
-                ],
-                "minimum_should_match": 1
+        //         "should": [
+        //             {
+        //                 "query_string": {
+        //                     "fields": ["message"],
+        //                     "query": "cFos OR *Samsung*"
+        //                 }
+        //             }, {
+        //                 "bool": {
+        //                     "should": [
+        //                         // { "match_phrase": { "message": "FileExts\\.rmi*" } },
+        //                         { "match_phrase": { "message": "FileExts\\.xml*" } }
+        //                     ]
+        //                 }
+        //             }
+        //         ],
+        //         "minimum_should_match": 1
             }
         },
         "size": SIZE
@@ -1783,7 +1783,7 @@ impl EventToCSV for Event26 {
 #[tokio::main]
 async fn main() {
     for &event_code in &[
-        "1", "2", "3", "5", "7", "9", "11", "13", "14", "15", "17", "22", "23", "25", "26",
+        "1", "2", "3", "5", "7", "9", "10", "11", "12", "13", "14", "15", "17", "18", "22", "23", "25", "26",
     ] {
         match fetch_data_from_es(event_code).await {
             Ok(datas) => {
@@ -1798,11 +1798,14 @@ async fn main() {
                         "5" => process_event_data::<Event5>(data, &filename),
                         "7" => process_event_data::<Event7>(data, &filename),
                         "9" => process_event_data::<Event9>(data, &filename),
+                        "10" => process_event_data::<Event11>(data, &filename),
                         "11" => process_event_data::<Event11>(data, &filename),
+                        "12" => process_event_data::<Event11>(data, &filename),
                         "13" => process_event_data::<Event13>(data, &filename),
                         "14" => process_event_data::<Event14>(data, &filename),
                         "15" => process_event_data::<Event15>(data, &filename),
                         "17" => process_event_data::<Event17>(data, &filename),
+                        "18" => process_event_data::<Event11>(data, &filename),
                         "22" => process_event_data::<Event22>(data, &filename),
                         "23" => process_event_data::<Event23>(data, &filename),
                         "25" => process_event_data::<Event25>(data, &filename),
