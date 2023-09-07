@@ -729,6 +729,103 @@ impl EventToCSV for Event9 {
     }
 }
 
+impl EventToCSV for Event10 {
+    fn parse(data: &serde_json::Value) -> Vec<Self> {
+        let mut entries = Vec::new();
+
+        if let Some(hits) = data["hits"]["hits"].as_array() {
+            for hit in hits {
+                if let Some(message) = hit["_source"]["message"].as_str() {
+                    // println!("Event10 raw message: {}", message);
+                    let mut entry = Event10 {
+                        agent_name: None,
+                        agent_id: None,
+                        event_action: Some("Process accessed".to_string()),
+                        utc_time: None,
+                        source_process_guid: None,
+                        source_process_id: None,
+                        source_thread_id: None,
+                        source_image: None,
+                        target_process_guid: None,
+                        target_process_id: None,
+                        target_thread_id: None,
+                        target_image: None,
+                        granted_access: None,
+                        call_trace: None,
+                        source_user: None,
+                        target_user: None
+                    };
+
+                    if let Some(agent_name) = hit["_source"]["agent"]["name"].as_str() {
+                        entry.agent_name = Some(agent_name.to_string());
+                    }
+
+                    if let Some(agent_id) = hit["_source"]["agent"]["id"].as_str() {
+                        entry.agent_id = Some(agent_id.to_string());
+                    }
+
+                    for part in message.split('\n') {
+                        let segments: Vec<_> = part.splitn(2, ':').collect();
+                        // println!("{:?}", segments); // Debug prints
+                        if segments.len() == 2 {
+                            let key = segments[0].trim();
+                            let value = segments[1].trim();
+                            match key {
+                                "UtcTime" => entry.utc_time = Some(value.to_string()),
+                                "SourceProcessGuid" => entry.source_process_guid = Some(value.to_string()),
+                                "SourceProcessId" => entry.source_process_id = Some(value.to_string()),
+                                "SourceThreadId" => entry.source_thread_id = Some(value.to_string()),
+                                "SourceImage" => entry.source_image = Some(value.to_string()),
+                                "TargetProcessGuid" => entry.target_process_guid = Some(value.to_string()),
+                                "TargetProcessId" => entry.target_process_id = Some(value.to_string()),
+                                "TargetThreadId" => entry.target_thread_id = Some(value.to_string()),
+                                "TargetImage" => entry.source_image = Some(value.to_string()),
+                                "GrantedAccess" => entry.granted_access = Some(value.to_string()),
+                                "CallTrace" => entry.call_trace = Some(value.to_string()),
+                                "SourceUser" => entry.source_user = Some(value.to_string()),
+                                "TargetUser" => entry.target_user = Some(value.to_string()),
+                                _ => {}
+                            }
+                        }
+                    }
+
+                    entries.push(entry);
+                }
+            }
+        }
+
+        entries
+    }
+
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
+        for entry in entries {
+            wtr.serialize(entry)?;
+        }
+        wtr.flush()?;
+        Ok(())
+    }
+}
+
 impl EventToCSV for Event11 {
     fn parse(data: &serde_json::Value) -> Vec<Self> {
         let mut entries = Vec::new();
@@ -773,6 +870,91 @@ impl EventToCSV for Event11 {
                                 "CreationUtcTime" => {
                                     entry.creation_utc_time = Some(value.to_string())
                                 }
+                                "User" => entry.user = Some(value.to_string()),
+                                _ => {}
+                            }
+                        }
+                    }
+
+                    entries.push(entry);
+                }
+            }
+        }
+
+        entries
+    }
+
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
+        for entry in entries {
+            wtr.serialize(entry)?;
+        }
+        wtr.flush()?;
+        Ok(())
+    }
+}
+
+impl EventToCSV for Event12 {
+    fn parse(data: &serde_json::Value) -> Vec<Self> {
+        let mut entries = Vec::new();
+
+        if let Some(hits) = data["hits"]["hits"].as_array() {
+            for hit in hits {
+                if let Some(message) = hit["_source"]["message"].as_str() {
+                    // println!("Event12 raw message: {}", message);
+                    let mut entry = Event12 {
+                        agent_name: None,
+                        agent_id: None,
+                        event_action: Some("Registry object added or deleted".to_string()),
+                        utc_time: None,
+                        event_type: None,
+                        process_guid: None,
+                        process_id: None,
+                        image: None,
+                        target_object: None,
+                        user: None,
+                    };
+
+                    if let Some(agent_name) = hit["_source"]["agent"]["name"].as_str() {
+                        entry.agent_name = Some(agent_name.to_string());
+                    }
+
+                    if let Some(agent_id) = hit["_source"]["agent"]["id"].as_str() {
+                        entry.agent_id = Some(agent_id.to_string());
+                    }
+
+                    for part in message.split('\n') {
+                        let segments: Vec<_> = part.splitn(2, ':').collect();
+                        // println!("{:?}", segments); // Debug prints
+                        if segments.len() == 2 {
+                            let key = segments[0].trim();
+                            let value = segments[1].trim();
+                            match key {
+                                "UtcTime" => entry.utc_time = Some(value.to_string()),
+                                "EventType" => entry.event_type = Some(value.to_string()),
+                                "ProcessGuid" => entry.process_guid = Some(value.to_string()),
+                                "ProcessId" => entry.process_id = Some(value.to_string()),
+                                "Image" => entry.image = Some(value.to_string()),
+                                "TargetObject" => entry.target_object = Some(value.to_string()),
                                 "User" => entry.user = Some(value.to_string()),
                                 _ => {}
                             }
@@ -1093,8 +1275,8 @@ impl EventToCSV for Event17 {
                         agent_name: None,
                         agent_id: None,
                         event_action: Some("Pipe Created".to_string()),
-                        event_type: None,
                         utc_time: None,
+                        event_type: None,
                         process_guid: None,
                         process_id: None,
                         pipe_name: None,
@@ -1117,8 +1299,93 @@ impl EventToCSV for Event17 {
                             let key = segments[0].trim();
                             let value = segments[1].trim();
                             match key {
-                                "EventType" => entry.event_type = Some(value.to_string()),
                                 "UtcTime" => entry.utc_time = Some(value.to_string()),
+                                "EventType" => entry.event_type = Some(value.to_string()),
+                                "ProcessGuid" => entry.process_guid = Some(value.to_string()),
+                                "ProcessId" => entry.process_id = Some(value.to_string()),
+                                "PipeName" => entry.pipe_name = Some(value.to_string()),
+                                "Image" => entry.image = Some(value.to_string()),
+                                "User" => entry.user = Some(value.to_string()),
+                                _ => {}
+                            }
+                        }
+                    }
+
+                    entries.push(entry);
+                }
+            }
+        }
+
+        entries
+    }
+
+    fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
+        // Check if entries is empty, and if so, return early.
+        if entries.is_empty() {
+            return Ok(());
+        }
+        
+        let file_exists = fs::metadata(filename).is_ok();
+        
+        let mut wtr = if file_exists {
+            // Open the file in append mode if it exists.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .has_headers(false)  // Don't write headers when appending.
+                .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
+        } else {
+            // Create a new file if it doesn't exist.
+            csv::WriterBuilder::new()
+                .delimiter(b'\t')
+                .from_path(filename)?
+        };
+        
+        for entry in entries {
+            wtr.serialize(entry)?;
+        }
+        wtr.flush()?;
+        Ok(())
+    }
+}
+
+impl EventToCSV for Event18 {
+    fn parse(data: &serde_json::Value) -> Vec<Self> {
+        let mut entries = Vec::new();
+
+        if let Some(hits) = data["hits"]["hits"].as_array() {
+            for hit in hits {
+                if let Some(message) = hit["_source"]["message"].as_str() {
+                    // println!("Event18 raw message: {}", message);
+                    let mut entry = Event18 {
+                        agent_name: None,
+                        agent_id: None,
+                        event_action: Some("Pipe Connected".to_string()),
+                        utc_time: None,
+                        event_type: None,
+                        process_guid: None,
+                        process_id: None,
+                        pipe_name: None,
+                        image: None,
+                        user: None,
+                    };
+
+                    if let Some(agent_name) = hit["_source"]["agent"]["name"].as_str() {
+                        entry.agent_name = Some(agent_name.to_string());
+                    }
+
+                    if let Some(agent_id) = hit["_source"]["agent"]["id"].as_str() {
+                        entry.agent_id = Some(agent_id.to_string());
+                    }
+
+                    for part in message.split('\n') {
+                        let segments: Vec<_> = part.splitn(2, ':').collect();
+                        // println!("{:?}", segments); // Debug prints
+                        if segments.len() == 2 {
+                            let key = segments[0].trim();
+                            let value = segments[1].trim();
+                            match key {
+                                "UtcTime" => entry.utc_time = Some(value.to_string()),
+                                "EventType" => entry.event_type = Some(value.to_string()),
                                 "ProcessGuid" => entry.process_guid = Some(value.to_string()),
                                 "ProcessId" => entry.process_id = Some(value.to_string()),
                                 "PipeName" => entry.pipe_name = Some(value.to_string()),
