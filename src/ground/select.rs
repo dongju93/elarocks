@@ -7,7 +7,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let db = DB::open_default("/Users/dong-ju/Documents/My_code/elarocks/db")?;
 
     // Example: Select data for a specific timestamp (wildcard match)
-    let partial_timestamp = "Registry value set_2023-08-16 11:01:48.42200000";
+    let partial_timestamp = "Registry value set_2023-09-07 01:59:00.01800000";
     let base_key = partial_timestamp.as_bytes();
 
     // Create an iterator for the database starting from the specified partial timestamp
