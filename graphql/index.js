@@ -5,6 +5,15 @@ const dbPath = path.join(__dirname, "../db");
 const db = RocksDB(dbPath);
 const async = require("async");
 
+function generateKeyForTime(event, time, subMillis = 0) {
+    const isoString = time.toISOString();
+    const subMillisecondPart = String(subMillis).padStart(5, "0");
+    const modifiedKey = isoString
+        .replace("T", " ")
+        .replace(/(\.\d{3})Z$/, `$1${subMillisecondPart}`);
+    return `${event}_${modifiedKey}`;
+}
+
 function generateKeysInRange(event, start, end) {
     const currentDateTime = new Date(start);
     const endDateTime = new Date(end);
@@ -67,56 +76,62 @@ const typeDefs = gql`
 // core
 const resolvers = {
     Query: {
-        sysmon: (parent, { filter }, context, info) => {
-            return new Promise((resolve, reject) => {
-                const { start, end } = filter.datetime;
-                const initialKeys = generateKeysInRange(
-                    filter.event,
-                    start,
-                    end
-                );
+        sysmon: async (parent, { filter }, context, info) => {
+            const { start, end } = filter.datetime;
+            let currentDateTime = new Date(start);
+            const endDateTime = new Date(end);
+            const allResults = [];
 
-                fetchKeys(initialKeys).then((results) => {
-                    resolve({
-                        SysmonNode: results,
-                        totalCount: results.length,
-                    });
-                });
-            });
+            while (currentDateTime <= endDateTime) {
+                const key = generateKeyForTime(filter.event, currentDateTime);
+                const result = await fetchKey(key); // Assumes fetchKey returns null if key is not found
+                // console.log(`${key}`)
+
+                if (result) {
+                    allResults.push(result);
+                    // Fetch subsequent 9 keys
+                    for (let i = 1; i < 10; i++) {
+                        const subsequentKey = generateKeyForTime(
+                            filter.event,
+                            currentDateTime,
+                            i
+                        );
+                        // console.log(`${subsequentKey}`)
+                        const subsequentResult = await fetchKey(subsequentKey);
+                        if (subsequentResult) {
+                            allResults.push(subsequentResult);
+                        }
+                    }
+                }
+
+                // Increment the main milliseconds part by 1
+                currentDateTime.setMilliseconds(
+                    currentDateTime.getMilliseconds() + 1
+                );
+            }
+
+            return {
+                SysmonNode: allResults,
+                totalCount: allResults.length,
+            };
         },
     },
 };
 
-function fetchKeys(keys) {
+function fetchKey(key) {
     return new Promise((resolve, reject) => {
-        async.mapLimit(
-            keys,
-            100,
-            (key, callback) => {
-                db.get(Buffer.from(key), (err, value) => {
-                    console.log("key is: " + `${key}`);
-                    if (err) {
-                        if (err.message === "NotFound: ") {
-                            // console.error("error fetching: "+`${key}`)
-                            callback(null, null); // Resolve with null for NotFound errors
-                        } else {
-                            callback(err);
-                        }
-                    } else {
-                        const parsedValue = JSON.parse(value.toString("utf-8"));
-                        callback(null, parsedValue);
-                    }
-                });
-            },
-            (err, results) => {
-                if (err) {
-                    reject(err);
+        db.get(Buffer.from(key), (err, value) => {
+            if (err) {
+                if (err.message === "NotFound: ") {
+                    resolve(null);
                 } else {
-                    const filteredResults = results.filter((result) => result);
-                    resolve(filteredResults);
+                    reject(err);
                 }
+            } else {
+                const parsedValue = JSON.parse(value.toString("utf-8"));
+                resolve(parsedValue);
             }
-        );
+        });
     });
 }
 
