@@ -4,6 +4,28 @@ const path = require("path");
 const dbPath = path.join(__dirname, "../db");
 const db = RocksDB(dbPath);
 
+function generateKeysInRange(event, start, end) {
+    let currentDateTime = new Date(start);
+    const endDateTime = new Date(end);
+    const keys = [];
+    
+    while (currentDateTime <= endDateTime) {
+        // Convert to ISO string and modify to match the desired key format
+        const isoString = currentDateTime.toISOString();
+        const modifiedKey = isoString.replace('T', ' ').replace(/(\.\d{3})Z$/, "$100000");
+        
+        const key = `${event}_${modifiedKey}`;
+        keys.push(key);
+        
+        // Increment by some interval (e.g., 1 second). Adjust based on your key frequency.
+        currentDateTime.setSeconds(currentDateTime.getSeconds() + 1);
+    }
+    
+    return keys;
+}
+
+
+
 // Updated schema
 const typeDefs = gql`
     type SysmonResponse {
@@ -24,9 +46,14 @@ const typeDefs = gql`
         user: String!
     }
 
+    input DateTimeRange {
+        start: String!
+        end: String!
+    }
+
     input SysmonFilter {
         event: String!
-        datetime: String!
+        datetime: DateTimeRange!
     }
 
     type Query {
@@ -39,24 +66,38 @@ const resolvers = {
     Query: {
         sysmon: (parent, { filter }, context, info) => {
             return new Promise((resolve, reject) => {
-                const key = `${filter.event}_${filter.datetime}`;
+                const { start, end } = filter.datetime;
+                const keysInRange = generateKeysInRange(filter.event, start, end);
 
-                db.get(Buffer.from(key), (err, value) => {
-                    if (err) {
-                        return reject(err);
-                    }
+                const results = [];
+                let fetchedCount = 0;
 
-                    if (value) {
-                        const parsedValue = JSON.parse(value.toString("utf-8"));
-                        resolve({ SysmonNode: [parsedValue] });
-                    } else {
-                        resolve({ SysmonNode: [] });
-                    }
+                keysInRange.forEach(key => {
+                    db.get(Buffer.from(key), (err, value) => {
+                        fetchedCount++;
+                        console.log(`Fetching key: ${key}`);  // Log the key being queried
+                        if (err) {
+                            console.error(`Error fetching key ${key}: ${err.message}`);  // Log any errors
+                            if (err.message !== 'NotFound: ') {
+                                return reject(err);
+                            }
+                        } else if (value) {
+                            const parsedValue = JSON.parse(value.toString("utf-8"));
+                            results.push(parsedValue);
+                        }
+
+                        // Check if all keys have been fetched
+                        if (fetchedCount === keysInRange.length) {
+                            console.log(`Total results found: ${results.length}`);  // Log total results found
+                            resolve({ SysmonNode: results });
+                        }
+                    });
                 });
             });
         },
     },
 };
+
 
 
 db.open((err) => {
