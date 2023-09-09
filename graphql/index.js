@@ -117,7 +117,10 @@ function fetchKey(key) {
 db.open((err) => {
     if (err) throw err;
 
-    const server = new ApolloServer({ typeDefs, resolvers });
+    const server = new ApolloServer({
+        typeDefs,
+        resolvers,
+    });
 
     server.listen().then(({ url }) => {
         console.log(`🚀 Server ready at ${url}`);
