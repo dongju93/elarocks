@@ -4,6 +4,46 @@ const path = require("path");
 const dbPath = path.join(__dirname, "../db");
 const db = RocksDB(dbPath);
 
+// postgre start
+const { Client } = require("pg");
+
+const client = new Client({
+    host: "localhost",
+    user: "dong-ju",
+    password: "",
+    database: "postgres",
+});
+
+client.connect();
+
+async function fetchDataBasedOnTime(start, end) {
+    // Modify start and end values
+    start = start.replace("T", " ").replace("Z", "00000");
+    end = end.replace("T", " ").replace("Z", "99999");
+
+    // console.log(start+" and "+end)
+
+    const query = `
+      SELECT *
+      FROM sysmon.reg_eve
+      WHERE savedtime BETWEEN $1 and $2;
+    `;
+
+    try {
+        const result = await client.query(query, [start, end]);
+        result.rows.forEach((row, index) => {
+            console.log(`Row ${index + 1}:`, row);
+        });
+
+        return result.rows;
+    } catch (error) {
+        console.error("Error executing query", error.stack);
+        return [];
+    }
+}
+
+//   postgre end
+
 // ket generate with only .xxx00000
 function generateKeyForTime(event, time, subMillis = 0) {
     const isoString = time.toISOString();
@@ -54,6 +94,7 @@ const resolvers = {
     Query: {
         sysmon: async (parent, { filter }, context, info) => {
             const { start, end } = filter.datetime;
+            const postgresResults = await fetchDataBasedOnTime(start, end);
             let currentDateTime = new Date(start);
             const endDateTime = new Date(end);
             const allResults = [];
