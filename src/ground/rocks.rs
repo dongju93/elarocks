@@ -1,15 +1,41 @@
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use csv::ReaderBuilder;
 use rocksdb::{WriteBatch, WriteOptions, DB};
 use serde::{Deserialize, Serialize};
 use serde_json::to_vec;
 use std::error::Error;
-
+use tokio_postgres::{Client, NoTls};
 
 // Import Sysmon event structs
 #[path = "../structs/mod.rs"]
 mod structs;
 use structs::eventTypes::*;
+
+async fn save_to_postgres(key: &str) -> Result<(), Box<dyn Error>> {
+    // Split the key and extract the datetime part
+    let parts: Vec<&str> = key.split('_').collect();
+    let datetime_str = parts.get(1).unwrap_or(&"");
+
+    // Connect to the PostgreSQL server
+    let (client, connection) =
+        tokio_postgres::connect("host=localhost user=dong-ju dbname=postgres", NoTls).await?;
+
+    tokio::spawn(async move {
+        if let Err(e) = connection.await {
+            eprintln!("connection error: {}", e);
+        }
+    });
+
+    // Save the time to the PostgreSQL table
+    client
+        .execute(
+            "INSERT INTO sysmon.reg_eve (savedtime) VALUES ($1)",
+            &[&datetime_str],
+        )
+        .await?;
+
+    Ok(())
+}
 
 // read csv files and save to RocksDB
 fn main() -> Result<(), Box<dyn Error>> {
@@ -105,7 +131,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             user: record.get(10).unwrap_or_default().to_string(),
         };
 
-         // Check if utc_time has changed from the previous record
+        // Check if utc_time has changed from the previous record
         if previous_utc_time != event.utc_time.to_string() {
             // If it has, reset the counter
             counter = 0;
@@ -114,8 +140,15 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // Form the key with the counter and serialize the struct
         let formatted_time = event.utc_time.format("%Y-%m-%d %H:%M:%S%.3f").to_string();
-        let key = format!("{}_{}{}", event.event_action, formatted_time, format!("{:05}", counter));
+        let key = format!(
+            "{}_{}{}",
+            event.event_action,
+            formatted_time,
+            format!("{:05}", counter)
+        );
         let serialized_value = to_vec(&event)?;
+        // let pgkey = format!("{}{}", formatted_time, format!("{:05}", counter));
+        tokio::runtime::Runtime::new()?.block_on(save_to_postgres(&key))?;
 
         // Increment the counter
         counter += 1;
