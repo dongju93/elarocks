@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "apollo-server": "^3.12.1",
+    "async": "^3.2.4",
     "graphql": "^16.8.0",
     "rocksdb": "^5.2.1"
   },

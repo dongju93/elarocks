@@ -5,10 +5,11 @@ query {
             event: "Registry value set"
             datetime: {
                 start: "2023-09-07T01:44:00.018Z"
-                end: "2023-09-07T03:20:00.018Z"
+                end: "2023-09-07T01:44:56.494Z"
             }
         }
     ) {
+        totalCount
         SysmonNode {
             agent_name
             agent_id

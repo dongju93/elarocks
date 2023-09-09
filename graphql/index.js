@@ -3,6 +3,7 @@ const RocksDB = require("rocksdb");
 const path = require("path");
 const dbPath = path.join(__dirname, "../db");
 const db = RocksDB(dbPath);
+const async = require("async");
 
 function generateKeysInRange(event, start, end) {
     let currentDateTime = new Date(start);
@@ -10,17 +11,16 @@ function generateKeysInRange(event, start, end) {
     const keys = [];
 
     while (currentDateTime <= endDateTime) {
-        // Convert to ISO string and modify to match the desired key format
         const isoString = currentDateTime.toISOString();
         const modifiedKey = isoString
             .replace("T", " ")
             .replace(/(\.\d{3})Z$/, "$100000");
-
         const key = `${event}_${modifiedKey}`;
         keys.push(key);
 
-        // Increment by some interval (e.g., 1 second). Adjust based on your key frequency.
-        currentDateTime.setSeconds(currentDateTime.getSeconds() + 1);
+        currentDateTime.setMilliseconds(
+            currentDateTime.getMilliseconds() + 1
+        );
     }
 
     return keys;
@@ -30,6 +30,7 @@ function generateKeysInRange(event, start, end) {
 const typeDefs = gql`
     type SysmonResponse {
         SysmonNode: [SysmonNode!]
+        totalCount: Int
     }
 
     type SysmonNode {
@@ -67,46 +68,55 @@ const resolvers = {
         sysmon: (parent, { filter }, context, info) => {
             return new Promise((resolve, reject) => {
                 const { start, end } = filter.datetime;
-                const keysInRange = generateKeysInRange(
+                const initialKeys = generateKeysInRange(
                     filter.event,
                     start,
                     end
                 );
 
-                const results = [];
-                let fetchedCount = 0;
-
-                keysInRange.forEach((key) => {
-                    db.get(Buffer.from(key), (err, value) => {
-                        fetchedCount++;
-                        // query key print
-                        // console.log(`Fetching key: ${key}`);
-                        if (err) {
-                            // errors print
-                            // console.error(`Error fetching key ${key}: ${err.message}`);
-                            if (err.message !== "NotFound: ") {
-                                return reject(err);
-                            }
-                        } else if (value) {
-                            const parsedValue = JSON.parse(
-                                value.toString("utf-8")
-                            );
-                            results.push(parsedValue);
-                        }
-
-                        // Total result print
-                        if (fetchedCount === keysInRange.length) {
-                            console.log(
-                                `Total results found: ${results.length}`
-                            );
-                            resolve({ SysmonNode: results });
-                        }
+                fetchKeys(initialKeys).then((results) => {
+                    resolve({
+                        SysmonNode: results,
+                        totalCount: results.length
                     });
                 });
             });
         },
     },
 };
+
+function fetchKeys(keys) {
+    return new Promise((resolve, reject) => {
+        async.mapLimit(
+            keys,
+            100,
+            (key, callback) => {
+                db.get(Buffer.from(key), (err, value) => {
+                    // console.log("key is: "+`${key}`)
+                    if (err) {
+                        if (err.message === "NotFound: ") {
+                            // console.error("error fetching: "+`${key}`)
+                            callback(null, null); // Resolve with null for NotFound errors
+                        } else {
+                            callback(err);
+                        }
+                    } else {
+                        const parsedValue = JSON.parse(value.toString("utf-8"));
+                        callback(null, parsedValue);
+                    }
+                });
+            },
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    const filteredResults = results.filter((result) => result);
+                    resolve(filteredResults);
+                }
+            }
+        );
+    });
+}
 
 db.open((err) => {
     if (err) throw err;
