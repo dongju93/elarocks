@@ -10,3 +10,4 @@ auto.sh
 /vendor
 /graphql/node_modules
 /graphql/package-lock.json
+*/**/.env

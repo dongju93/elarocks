@@ -3,15 +3,16 @@ const RocksDB = require("rocksdb");
 const path = require("path");
 const dbPath = path.join(__dirname, "../db");
 const db = RocksDB(dbPath);
+require("dotenv").config();
 
 // postgre start
 const { Client } = require("pg");
 
 const client = new Client({
-    host: "localhost",
-    user: "dong-ju",
-    password: "",
-    database: "postgres",
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
 });
 
 client.connect();
@@ -23,17 +24,10 @@ async function fetchDataBasedOnTime(start, end) {
 
     // console.log(start+" and "+end)
 
-    const query = `
-      SELECT *
-      FROM sysmon.reg_eve
-      WHERE savedtime BETWEEN $1 and $2;
-    `;
+    const query = process.env.SQL_QUERY;
 
     try {
         const result = await client.query(query, [start, end]);
-        result.rows.forEach((row, index) => {
-            console.log(`Row ${index + 1}:`, row);
-        });
 
         return result.rows;
     } catch (error) {
@@ -43,16 +37,6 @@ async function fetchDataBasedOnTime(start, end) {
 }
 
 //   postgre end
-
-// ket generate with only .xxx00000
-function generateKeyForTime(event, time, subMillis = 0) {
-    const isoString = time.toISOString();
-    const subMillisecondPart = String(subMillis).padStart(5, "0");
-    const modifiedKey = isoString
-        .replace("T", " ")
-        .replace(/(\.\d{3})Z$/, `$1${subMillisecondPart}`);
-    return `${event}_${modifiedKey}`;
-}
 
 // schema
 const typeDefs = gql`
@@ -95,37 +79,14 @@ const resolvers = {
         sysmon: async (parent, { filter }, context, info) => {
             const { start, end } = filter.datetime;
             const postgresResults = await fetchDataBasedOnTime(start, end);
-            let currentDateTime = new Date(start);
-            const endDateTime = new Date(end);
+
             const allResults = [];
-
-            while (currentDateTime <= endDateTime) {
-                const key = generateKeyForTime(filter.event, currentDateTime);
+            for (const row of postgresResults) {
+                const key = `${filter.event}_${row.savedtime}`;
                 const result = await fetchKey(key);
-                // console.log(`${key}`)
-
-                // if key is not null
                 if (result) {
                     allResults.push(result);
-                    // .xxx00001 ~ .xxx00009 key generate
-                    for (let i = 1; i < 10; i++) {
-                        const subsequentKey = generateKeyForTime(
-                            filter.event,
-                            currentDateTime,
-                            i
-                        );
-                        // console.log(`${subsequentKey}`)
-                        const subsequentResult = await fetchKey(subsequentKey);
-                        if (subsequentResult) {
-                            allResults.push(subsequentResult);
-                        }
-                    }
                 }
-
-                // add ms
-                currentDateTime.setMilliseconds(
-                    currentDateTime.getMilliseconds() + 1
-                );
             }
 
             return {
