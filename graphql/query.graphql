@@ -1,0 +1,25 @@
+# http://localhost:4000/
+query {
+  sysmon( filter:
+  {
+    event: "Registry value set",
+    datetime: {
+      start: "2023-09-07T01:44:00.018Z",
+      end: "2023-09-07T03:20:00.018Z"
+    }
+  } ) {
+    SysmonNode {
+      agent_name
+      agent_id
+      event_action
+      event_type
+      utc_time
+      process_guid
+      process_id
+      image
+      target_object
+      details
+      user
+    }
+  }
+}
