@@ -4,41 +4,60 @@ const path = require("path");
 const dbPath = path.join(__dirname, "../db");
 const db = RocksDB(dbPath);
 
-// schema
+// Updated schema
 const typeDefs = gql`
-    type KeyValue {
-        key: String!
-        value: String!
+    type SysmonResponse {
+        SysmonNode: [SysmonNode!]
+    }
+
+    type SysmonNode {
+        agent_name: String!
+        agent_id: String!
+        event_action: String!
+        event_type: String!
+        utc_time: String!
+        process_guid: String!
+        process_id: Int!
+        image: String!
+        target_object: String!
+        details: String!
+        user: String!
+    }
+
+    input SysmonFilter {
+        event: String!
+        datetime: String!
     }
 
     type Query {
-        sysmon(key: String!): [KeyValue]
+        sysmon(filter: SysmonFilter!): SysmonResponse
     }
 `;
 
-// simple resolvers
+// Updated resolvers
 const resolvers = {
     Query: {
-        sysmon: (parent, args, context, info) => {
+        sysmon: (parent, { filter }, context, info) => {
             return new Promise((resolve, reject) => {
-                const partial_timestamp = args.key;
-                db.get(Buffer.from(partial_timestamp), (err, value) => {
+                const key = `${filter.event}_${filter.datetime}`;
+
+                db.get(Buffer.from(key), (err, value) => {
                     if (err) {
                         return reject(err);
                     }
 
                     if (value) {
-                        const key_str = partial_timestamp;
-                        const value_str = value.toString("utf-8");
-                        resolve([{ key: key_str, value: value_str }]);
+                        const parsedValue = JSON.parse(value.toString("utf-8"));
+                        resolve({ SysmonNode: [parsedValue] });
                     } else {
-                        resolve([]);
+                        resolve({ SysmonNode: [] });
                     }
                 });
             });
         },
     },
 };
+
 
 db.open((err) => {
     if (err) throw err;
