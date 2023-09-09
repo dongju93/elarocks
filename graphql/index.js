@@ -6,21 +6,23 @@ const db = RocksDB(dbPath);
 const async = require("async");
 
 function generateKeysInRange(event, start, end) {
-    let currentDateTime = new Date(start);
+    const currentDateTime = new Date(start);
     const endDateTime = new Date(end);
     const keys = [];
 
     while (currentDateTime <= endDateTime) {
-        const isoString = currentDateTime.toISOString();
-        const modifiedKey = isoString
-            .replace("T", " ")
-            .replace(/(\.\d{3})Z$/, "$100000");
-        const key = `${event}_${modifiedKey}`;
-        keys.push(key);
+        for (let i = 0; i < 10; i++) {
+            const isoString = currentDateTime.toISOString();
+            const subMillis = String(i).padStart(5, "0"); // This will generate 00000, 00001, 00002, ...
+            const modifiedKey = isoString
+                .replace("T", " ")
+                .replace(/(\.\d{3})Z$/, `$1${subMillis}`);
+            const key = `${event}_${modifiedKey}`;
+            keys.push(key);
+        }
 
-        currentDateTime.setMilliseconds(
-            currentDateTime.getMilliseconds() + 1
-        );
+        // Increment the main milliseconds part by 1
+        currentDateTime.setMilliseconds(currentDateTime.getMilliseconds() + 1);
     }
 
     return keys;
@@ -77,7 +79,7 @@ const resolvers = {
                 fetchKeys(initialKeys).then((results) => {
                     resolve({
                         SysmonNode: results,
-                        totalCount: results.length
+                        totalCount: results.length,
                     });
                 });
             });
@@ -92,7 +94,7 @@ function fetchKeys(keys) {
             100,
             (key, callback) => {
                 db.get(Buffer.from(key), (err, value) => {
-                    // console.log("key is: "+`${key}`)
+                    console.log("key is: " + `${key}`);
                     if (err) {
                         if (err.message === "NotFound: ") {
                             // console.error("error fetching: "+`${key}`)
