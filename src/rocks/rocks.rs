@@ -14,11 +14,7 @@ use structs::eventTypes::*;
 mod envs;
 use envs::env::{DBCONN, DBINSE_PRO, DBINSE_REG};
 
-async fn save_to_postgres(key: &str) -> Result<(), Box<dyn Error>> {
-    // Split the key and extract the datetime part
-    let parts: Vec<&str> = key.split('_').collect();
-    let datetime_str = parts.get(1).unwrap_or(&"");
-
+async fn save_keys_to_postgres(keys_to_save: &Vec<String>) -> Result<(), Box<dyn Error>> {
     let (client, connection) = tokio_postgres::connect(DBCONN, NoTls).await?;
 
     tokio::spawn(async move {
@@ -27,8 +23,13 @@ async fn save_to_postgres(key: &str) -> Result<(), Box<dyn Error>> {
         }
     });
 
-    // Save the time to the PostgreSQL table
-    client.execute(DBINSE_REG, &[&datetime_str]).await?;
+    client.batch_execute("BEGIN").await?;
+    for ktime in keys_to_save.iter() {
+        let parts: Vec<&str> = ktime.split('_').collect();
+        let datetime_str = parts.get(1).unwrap_or(&"");
+        client.execute(DBINSE_REG, &[&datetime_str]).await?;
+    }
+    client.batch_execute("COMMIT").await?;
 
     Ok(())
 }
@@ -50,6 +51,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut counter: u32 = 0;
     let mut previous_utc_time = String::new();
+    let mut keys_to_save = Vec::new();
 
     // Iterate over CSV rows and store in RocksDB
     for result in rdr.records() {
@@ -142,8 +144,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             formatted_time,
             format!("{:05}", counter)
         );
+
+        // Add the time to the accumulator
+        keys_to_save.push(key.clone());
+
         let serialized_value = to_vec(&event)?;
-        tokio::runtime::Runtime::new()?.block_on(save_to_postgres(&key))?;
 
         // Increment the counter
         counter += 1;
@@ -151,6 +156,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         // Add to the write batch
         write_batch.put(key.as_bytes(), &serialized_value);
     }
+
+    // pass time vac
+    tokio::runtime::Runtime::new()?.block_on(save_keys_to_postgres(&keys_to_save))?;
 
     // Commit the write batch to perform bulk writes
     db.write_opt(write_batch, &write_options)?;
