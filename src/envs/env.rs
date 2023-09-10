@@ -20,7 +20,3 @@ pub const SIZE: usize = 1000000;
 // File save location
 pub const SAVELOCATION: &str = "/Users/dong-ju/Documents/My_code/elarocks/file/temp/event";
 pub const CSVNAME: &str = "_logs.csv";
-
-pub const DBCONN: &str = "host=localhost user=dong-ju dbname=postgres";
-pub const DBINSE_REG: &str = "INSERT INTO sysmon.reg_eve (savedtime) VALUES ($1)";
-pub const DBINSE_PRO: &str = "INSERT INTO sysmon.pro_eve (savedtime) VALUES ($1)";
