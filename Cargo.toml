@@ -84,8 +84,8 @@ path = "src/byEvents/main26.rs"
 
 [[bin]]
 name = "rocks"
-path = "src/ground/rocks.rs"
+path = "src/rocks/rocks.rs"
 
 [[bin]]
 name = "select"
-path = "src/ground/select.rs"
+path = "src/rocks/select.rs"

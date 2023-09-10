@@ -1,19 +1,16 @@
 use rocksdb::{IteratorMode, DB};
 use std::error::Error;
 
-// Show selected Keys with Values within RocksDB
 fn main() -> Result<(), Box<dyn Error>> {
-    // Open the RocksDB database
     let db = DB::open_default("/Users/dong-ju/Documents/My_code/elarocks/db")?;
 
-    // Example: Select data for a specific timestamp (wildcard match)
     let partial_timestamp = "Registry value set_2023-09-07 01:59:00.01800000";
     let base_key = partial_timestamp.as_bytes();
 
     // Create an iterator for the database starting from the specified partial timestamp
     let iter = db.iterator(IteratorMode::From(base_key, rocksdb::Direction::Forward));
 
-    // Iterate over the data entries with keys matching the wildcard
+    // Iterate over the data entries with keys
     for item in iter {
         match item {
             Ok((key, value)) => {
@@ -25,13 +22,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                     let value_str = String::from_utf8(value.to_vec())?;
                     println!("Key: {}, Value: {}", key_str, value_str);
                 } else {
-                    // If the key does not contain the desired partial timestamp, break the loop
                     break;
                 }
             }
             Err(e) => {
                 eprintln!("Error while iterating: {:?}", e);
-                // Handle the error as needed
             }
         }
     }

@@ -21,7 +21,7 @@ async function fetchDataBasedOnTime(start, end) {
     end = end.replace("T", " ").replace("Z", "99999");
     // console.log(start+" and "+end)
 
-    const query = process.env.SQL_QUERY;
+    const query = process.env.SQL_QUERY_REG;
 
     try {
         const result = await client.query(query, [start, end]);
