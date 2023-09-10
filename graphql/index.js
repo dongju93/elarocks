@@ -3,32 +3,28 @@ const RocksDB = require("rocksdb");
 const path = require("path");
 const dbPath = path.join(__dirname, "../db");
 const db = RocksDB(dbPath);
+const { Client } = require("pg");
 require("dotenv").config();
 
-// postgre start
-const { Client } = require("pg");
-
+// postgres connect
 const client = new Client({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
 });
-
 client.connect();
 
 async function fetchDataBasedOnTime(start, end) {
-    // Modify start and end values
+    // modify utc format input for query
     start = start.replace("T", " ").replace("Z", "00000");
     end = end.replace("T", " ").replace("Z", "99999");
-
     // console.log(start+" and "+end)
 
     const query = process.env.SQL_QUERY;
 
     try {
         const result = await client.query(query, [start, end]);
-
         return result.rows;
     } catch (error) {
         console.error("Error executing query", error.stack);
@@ -36,9 +32,7 @@ async function fetchDataBasedOnTime(start, end) {
     }
 }
 
-//   postgre end
-
-// schema
+// graphql schema
 const typeDefs = gql`
     type SysmonResponse {
         SysmonNode: [SysmonNode!]
@@ -114,6 +108,7 @@ function fetchKey(key) {
     });
 }
 
+// rocksdb open
 db.open((err) => {
     if (err) throw err;
 
