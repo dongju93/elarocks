@@ -9,16 +9,26 @@ const client = new Client({
 });
 client.connect();
 
-async function fetchDataBasedOnTime(start, end) {
-    // modify utc format input for query
+async function fetchDataBasedOnTime(event, start, end) {
     start = start.replace("T", " ").replace("Z", "00000");
     end = end.replace("T", " ").replace("Z", "99999");
     // console.log(start+" and "+end)
 
-    const query = process.env.SQL_QUERY_REG;
+    let query;
+    switch (event) {
+        case "Registry value set":
+            query = process.env.SQL_QUERY_REG;
+            break;
+        case "Process Create":
+            query = process.env.SQL_QUERY_PRO;
+            break;
+        default:
+            throw new Error(`Unsupported event type: ${event}`);
+    }
 
     try {
         const result = await client.query(query, [start, end]);
+        // console.log('Postgres Results:', result.rows);
         return result.rows;
     } catch (error) {
         console.error("Error executing query", error.stack);

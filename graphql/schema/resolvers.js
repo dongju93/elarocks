@@ -3,25 +3,54 @@ const { fetchDataBasedOnTime } = require("../fetchData");
 
 const resolvers = {
     Query: {
-        sysmon: async (parent, { filter }, context, info) => {
-            const { start, end } = filter.datetime;
-            const postgresResults = await fetchDataBasedOnTime(start, end);
-
-            const allResults = [];
-            for (const row of postgresResults) {
-                const key = `${filter.event}_${row.savedtime}`;
-                const result = await fetchKey(key);
-                if (result) {
-                    allResults.push(result);
-                }
+        RegValueSetEve: async (parent, { filter }, context, info) => {
+            if (filter.event !== "Registry value set") {
+                throw new Error("Invalid event for RegValueSetEve query");
             }
-
-            return {
-                SysmonNode: allResults,
-                totalCount: allResults.length,
-            };
+            return fetchSysmonData(filter, "RegValueSetEve");
+        },
+        ProcessCreateEve: async (parent, { filter }, context, info) => {
+            if (filter.event !== "Process Create") {
+                throw new Error("Invalid event for ProcessCreateEve query");
+            }
+            return fetchSysmonData(filter, "ProcessCreateEve");
         },
     },
 };
+
+async function fetchSysmonData(filter, nodeType) {
+    const { start, end } = filter.datetime;
+    const postgresResults = await fetchDataBasedOnTime(
+        filter.event,
+        start,
+        end
+    );
+
+    const allResults = [];
+    for (const row of postgresResults) {
+        const key = `${filter.event}_${row.savedtime}`;
+        const result = await fetchKey(key);
+        if (result) {
+            allResults.push(result);
+        }
+    }
+
+    // console.log("Final allResults:", allResults);
+
+    switch (nodeType) {
+        case "RegValueSetEve":
+            return {
+                Node: allResults,
+                totalCount: allResults.length,
+            };
+        case "ProcessCreateEve":
+            return {
+                Node: allResults,
+                totalCount: allResults.length,
+            };
+        default:
+            throw new Error("Invalid node type");
+    }
+}
 
 module.exports = resolvers;
