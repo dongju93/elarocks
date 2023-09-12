@@ -1,7 +1,7 @@
 extern crate chrono;
 use chrono::{DateTime, Utc};
-use std::net::IpAddr;
 use serde::{Deserialize, Serialize};
+use std::net::IpAddr;
 
 // EVENT 1
 #[derive(Serialize, Deserialize, Debug)]
@@ -49,27 +49,28 @@ struct FileCreateTimeChangedEvent {
 }
 
 // EVENT 3
-struct NetworkConnectionEvent {
-    agent_name: String,
-    agent_id: String,
-    event_action: String,
-    utc_time: DateTime<Utc>,
-    process_guid: String,
-    process_id: u32,
-    image: String,
-    user: String,
-    protocol: String,
-    initiated: bool,
-    source_is_ipv6: bool,
-    source_ip: IpAddr,
-    source_hostname: String,
-    source_port: u16,
-    source_port_name: String,
-    destination_is_ipv6: bool,
-    destination_ip: IpAddr,
-    destination_hostname: String,
-    destination_port: u16,
-    destination_port_name: String,
+#[derive(Serialize, Deserialize, Debug)]
+pub struct NetworkConnectionEvent {
+    pub agent_name: String,
+    pub agent_id: String,
+    pub event_action: String,
+    pub utc_time: DateTime<Utc>,
+    pub process_guid: String,
+    pub process_id: u32,
+    pub image: String,
+    pub user: String,
+    pub protocol: String,
+    pub initiated: bool,
+    pub source_is_ipv6: bool,
+    pub source_ip: IpAddr,
+    pub source_hostname: String,
+    pub source_port: u16,
+    pub source_port_name: String,
+    pub destination_is_ipv6: bool,
+    pub destination_ip: IpAddr,
+    pub destination_hostname: String,
+    pub destination_port: u16,
+    pub destination_port_name: String,
 }
 
 // EVENT 4 : sysmon event 불필요

@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::to_vec;
 use std::error::Error;
 use tokio_postgres::{Client, NoTls};
+use std::net::{IpAddr, Ipv4Addr};
 
 #[path = "../structs/mod.rs"]
 mod structs;
@@ -22,6 +23,7 @@ struct CsvConfig {
 enum EventType {
     ProcessCreate,
     RegistryValueSet,
+    NetworkConnection,
 }
 
 async fn save_keys_to_postgres(
@@ -122,6 +124,35 @@ fn process_record(
             };
             to_vec(&event).map_err(|e| Box::new(e) as Box<dyn Error>)
         }
+        EventType::NetworkConnection => {
+            let event = NetworkConnectionEvent {
+                agent_name: record.get(0).unwrap_or_default().to_string(),
+                agent_id: record.get(1).unwrap_or_default().to_string(),
+                event_action: record.get(2).unwrap_or_default().to_string(),
+                utc_time: utc_time,
+                process_guid: record.get(4).unwrap_or_default().to_string(),
+                process_id: record
+                    .get(5)
+                    .unwrap_or_default()
+                    .parse::<u32>()
+                    .unwrap_or(0),
+                image: record.get(6).unwrap_or_default().to_string(),
+                user: record.get(14).unwrap_or_default().to_string(),
+                protocol: String::new(),
+                initiated: false,
+                source_is_ipv6: false,
+                source_ip: IpAddr::V4(Ipv4Addr::UNSPECIFIED),
+                source_hostname: String::new(),
+                source_port: 0,
+                source_port_name: String::new(),
+                destination_is_ipv6: false,
+                destination_ip: IpAddr::V4(Ipv4Addr::UNSPECIFIED),
+                destination_hostname: String::new(),
+                destination_port: 0,
+                destination_port_name: String::new(),
+            };
+            to_vec(&event).map_err(|e| Box::new(e) as Box<dyn Error>)
+        }
         _ => Err(Box::from("Unknown event type")),
     }
 }
@@ -183,6 +214,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         CsvConfig {
             csv_path: format!("{}{}", CSV_LOCA, "event13_logs.csv"),
             event_type: EventType::RegistryValueSet,
+            query: DBINSE_REG,
+        },
+        CsvConfig {
+            csv_path: format!("{}{}", CSV_LOCA, "event3_logs.csv"),
+            event_type: EventType::NetworkConnection,
             query: DBINSE_REG,
         },
     ];
