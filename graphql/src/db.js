@@ -1,6 +1,6 @@
 const RocksDB = require("rocksdb");
 const path = require("path");
-const dbPath = path.join(__dirname, "../db");
+const dbPath = path.join(__dirname, "../../db");
 const db = RocksDB(dbPath);
 
 function fetchKey(key) {
