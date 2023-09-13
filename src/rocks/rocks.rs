@@ -4,8 +4,9 @@ use rocksdb::{WriteBatch, WriteOptions, DB};
 use serde::{Deserialize, Serialize};
 use serde_json::to_vec;
 use std::error::Error;
-use tokio_postgres::{Client, NoTls};
 use std::net::{IpAddr, Ipv4Addr};
+use std::ptr::null;
+use tokio_postgres::{Client, NoTls};
 
 #[path = "../structs/mod.rs"]
 mod structs;
@@ -137,19 +138,47 @@ fn process_record(
                     .parse::<u32>()
                     .unwrap_or(0),
                 image: record.get(6).unwrap_or_default().to_string(),
-                user: record.get(14).unwrap_or_default().to_string(),
-                protocol: String::new(),
-                initiated: false,
-                source_is_ipv6: false,
-                source_ip: IpAddr::V4(Ipv4Addr::UNSPECIFIED),
-                source_hostname: String::new(),
-                source_port: 0,
-                source_port_name: String::new(),
-                destination_is_ipv6: false,
-                destination_ip: IpAddr::V4(Ipv4Addr::UNSPECIFIED),
-                destination_hostname: String::new(),
-                destination_port: 0,
-                destination_port_name: String::new(),
+                user: record.get(7).unwrap_or_default().to_string(),
+                protocol: record.get(8).unwrap_or_default().to_string(),
+                initiated: record
+                    .get(9)
+                    .unwrap_or_default()
+                    .parse::<bool>()
+                    .unwrap_or(false),
+                source_is_ipv6: record
+                    .get(10)
+                    .unwrap_or_default()
+                    .parse::<bool>()
+                    .unwrap_or(false),
+                source_ip: record
+                    .get(11)
+                    .unwrap_or_default()
+                    .parse::<IpAddr>()
+                    .unwrap_or(IpAddr::V4(Ipv4Addr::UNSPECIFIED)),
+                source_hostname: record.get(12).unwrap_or_default().to_string(),
+                source_port: record
+                    .get(13)
+                    .unwrap_or_default()
+                    .parse::<u16>()
+                    .unwrap_or(0),
+                source_port_name: record.get(14).unwrap_or_default().to_string(),
+                destination_is_ipv6: record
+                    .get(15)
+                    .unwrap_or_default()
+                    .parse::<bool>()
+                    .unwrap_or(false),
+                destination_ip: record
+                    .get(16)
+                    .unwrap_or_default()
+                    .parse::<IpAddr>()
+                    .unwrap_or(IpAddr::V4(Ipv4Addr::UNSPECIFIED)),
+                destination_hostname: record.get(17).unwrap_or_default().to_string(),
+                destination_port: record
+                    .get(18)
+                    .unwrap_or_default()
+                    .parse::<u16>()
+                    .unwrap_or(0),
+                destination_port_name: record.get(19).unwrap_or_default().to_string(),
             };
             to_vec(&event).map_err(|e| Box::new(e) as Box<dyn Error>)
         }
@@ -219,7 +248,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         CsvConfig {
             csv_path: format!("{}{}", CSV_LOCA, "event3_logs.csv"),
             event_type: EventType::NetworkConnection,
-            query: DBINSE_REG,
+            query: DBINSE_NET,
         },
     ];
 

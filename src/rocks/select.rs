@@ -4,7 +4,7 @@ use std::error::Error;
 fn main() -> Result<(), Box<dyn Error>> {
     let db = DB::open_default("/Users/dong-ju/Documents/My_code/elarocks/db")?;
 
-    let partial_timestamp = "Process Create_2023-08-02 00:00:14.62300000";
+    let partial_timestamp = "Network connection detected_2023-09-07 01:58:50.13600001";
     let base_key = partial_timestamp.as_bytes();
 
     // Create an iterator for the database starting from the specified partial timestamp
