@@ -17,6 +17,7 @@ rocksdb = "0.21.0"
 csv = "1.2.2"
 chrono = {version="0.4.26", features = ["serde"]}
 tokio-postgres = "0.7.10"
+rayon = "1.7.0"
 
 [[bin]]
 name = "main"

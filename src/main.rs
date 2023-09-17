@@ -1,6 +1,7 @@
 #![allow(deprecated)]
 
 // External Dependecys, import through Cargo.toml
+use rayon::prelude::*;
 use reqwest::header;
 use serde_json::json;
 use std::fs;
@@ -230,14 +231,14 @@ impl EventToCSV for Event1 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -245,7 +246,7 @@ impl EventToCSV for Event1 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -321,14 +322,14 @@ impl EventToCSV for Event2 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -336,7 +337,7 @@ impl EventToCSV for Event2 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -436,14 +437,14 @@ impl EventToCSV for Event3 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -451,7 +452,7 @@ impl EventToCSV for Event3 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -517,14 +518,14 @@ impl EventToCSV for Event5 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -532,7 +533,7 @@ impl EventToCSV for Event5 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -622,14 +623,14 @@ impl EventToCSV for Event7 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -637,7 +638,7 @@ impl EventToCSV for Event7 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -705,14 +706,14 @@ impl EventToCSV for Event9 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -720,7 +721,7 @@ impl EventToCSV for Event9 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -753,7 +754,7 @@ impl EventToCSV for Event10 {
                         granted_access: None,
                         call_trace: None,
                         source_user: None,
-                        target_user: None
+                        target_user: None,
                     };
 
                     if let Some(agent_name) = hit["_source"]["agent"]["name"].as_str() {
@@ -772,13 +773,25 @@ impl EventToCSV for Event10 {
                             let value = segments[1].trim();
                             match key {
                                 "UtcTime" => entry.utc_time = Some(value.to_string()),
-                                "SourceProcessGuid" => entry.source_process_guid = Some(value.to_string()),
-                                "SourceProcessId" => entry.source_process_id = Some(value.to_string()),
-                                "SourceThreadId" => entry.source_thread_id = Some(value.to_string()),
+                                "SourceProcessGuid" => {
+                                    entry.source_process_guid = Some(value.to_string())
+                                }
+                                "SourceProcessId" => {
+                                    entry.source_process_id = Some(value.to_string())
+                                }
+                                "SourceThreadId" => {
+                                    entry.source_thread_id = Some(value.to_string())
+                                }
                                 "SourceImage" => entry.source_image = Some(value.to_string()),
-                                "TargetProcessGuid" => entry.target_process_guid = Some(value.to_string()),
-                                "TargetProcessId" => entry.target_process_id = Some(value.to_string()),
-                                "TargetThreadId" => entry.target_thread_id = Some(value.to_string()),
+                                "TargetProcessGuid" => {
+                                    entry.target_process_guid = Some(value.to_string())
+                                }
+                                "TargetProcessId" => {
+                                    entry.target_process_id = Some(value.to_string())
+                                }
+                                "TargetThreadId" => {
+                                    entry.target_thread_id = Some(value.to_string())
+                                }
                                 "TargetImage" => entry.source_image = Some(value.to_string()),
                                 "GrantedAccess" => entry.granted_access = Some(value.to_string()),
                                 "CallTrace" => entry.call_trace = Some(value.to_string()),
@@ -802,14 +815,14 @@ impl EventToCSV for Event10 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -817,7 +830,7 @@ impl EventToCSV for Event10 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -889,14 +902,14 @@ impl EventToCSV for Event11 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -904,7 +917,7 @@ impl EventToCSV for Event11 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -974,14 +987,14 @@ impl EventToCSV for Event12 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -989,7 +1002,7 @@ impl EventToCSV for Event12 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -1061,14 +1074,14 @@ impl EventToCSV for Event13 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -1076,7 +1089,7 @@ impl EventToCSV for Event13 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -1148,14 +1161,14 @@ impl EventToCSV for Event14 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -1163,7 +1176,7 @@ impl EventToCSV for Event14 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -1239,14 +1252,14 @@ impl EventToCSV for Event15 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -1254,7 +1267,7 @@ impl EventToCSV for Event15 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -1324,14 +1337,14 @@ impl EventToCSV for Event17 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -1339,7 +1352,7 @@ impl EventToCSV for Event17 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -1409,14 +1422,14 @@ impl EventToCSV for Event18 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -1424,7 +1437,7 @@ impl EventToCSV for Event18 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -1496,14 +1509,14 @@ impl EventToCSV for Event22 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -1511,7 +1524,7 @@ impl EventToCSV for Event22 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -1585,14 +1598,14 @@ impl EventToCSV for Event23 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -1600,7 +1613,7 @@ impl EventToCSV for Event23 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -1668,14 +1681,14 @@ impl EventToCSV for Event25 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -1683,7 +1696,7 @@ impl EventToCSV for Event25 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -1755,14 +1768,14 @@ impl EventToCSV for Event26 {
         if entries.is_empty() {
             return Ok(());
         }
-        
+
         let file_exists = fs::metadata(filename).is_ok();
-        
+
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
                 .delimiter(b'\t')
-                .has_headers(false)  // Don't write headers when appending.
+                .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -1770,7 +1783,7 @@ impl EventToCSV for Event26 {
                 .delimiter(b'\t')
                 .from_path(filename)?
         };
-        
+
         for entry in entries {
             wtr.serialize(entry)?;
         }
@@ -1780,43 +1793,91 @@ impl EventToCSV for Event26 {
 }
 
 // Excute functions with argumentss
+// before multi-thread processing
+// #[tokio::main]
+// async fn main() {
+//     for &event_code in &[
+//         "1", "2", "3", "5", "7", "9", "10", "11", "12", "13", "14", "15", "17", "18", "22", "23", "25", "26",
+//     ] {
+//         match fetch_data_from_es(event_code).await {
+//             Ok(datas) => {
+//                 let filename = format!("{}{}{}", SAVELOCATION, event_code, CSVNAME);
+//                 // println!("Raw data for event code {}: {:?}", event_code, datas);
+//                 println!("Event {}", event_code);
+//                 for data in &datas {
+//                     match event_code {
+//                         "1" => process_event_data::<Event1>(data, &filename),
+//                         "2" => process_event_data::<Event2>(data, &filename),
+//                         "3" => process_event_data::<Event3>(data, &filename),
+//                         "5" => process_event_data::<Event5>(data, &filename),
+//                         "7" => process_event_data::<Event7>(data, &filename),
+//                         "9" => process_event_data::<Event9>(data, &filename),
+//                         "10" => process_event_data::<Event10>(data, &filename),
+//                         "11" => process_event_data::<Event11>(data, &filename),
+//                         "12" => process_event_data::<Event12>(data, &filename),
+//                         "13" => process_event_data::<Event13>(data, &filename),
+//                         "14" => process_event_data::<Event14>(data, &filename),
+//                         "15" => process_event_data::<Event15>(data, &filename),
+//                         "17" => process_event_data::<Event17>(data, &filename),
+//                         "18" => process_event_data::<Event18>(data, &filename),
+//                         "22" => process_event_data::<Event22>(data, &filename),
+//                         "23" => process_event_data::<Event23>(data, &filename),
+//                         "25" => process_event_data::<Event25>(data, &filename),
+//                         "26" => process_event_data::<Event26>(data, &filename),
+//                         _ => continue,
+//                     };
+//                 }
+//             }
+//             Err(err) => eprintln!("Error: {:?}", err),
+//         }
+//     }
+// }
+
+// after multi-thread processing
 #[tokio::main]
 async fn main() {
-    for &event_code in &[
-        "1", "2", "3", "5", "7", "9", "10", "11", "12", "13", "14", "15", "17", "18", "22", "23", "25", "26",
-    ] {
-        match fetch_data_from_es(event_code).await {
-            Ok(datas) => {
-                let filename = format!("{}{}{}", SAVELOCATION, event_code, CSVNAME);
-                // println!("Raw data for event code {}: {:?}", event_code, datas);
-                println!("Event {}", event_code);
-                for data in &datas {
-                    match event_code {
-                        "1" => process_event_data::<Event1>(data, &filename),
-                        "2" => process_event_data::<Event2>(data, &filename),
-                        "3" => process_event_data::<Event3>(data, &filename),
-                        "5" => process_event_data::<Event5>(data, &filename),
-                        "7" => process_event_data::<Event7>(data, &filename),
-                        "9" => process_event_data::<Event9>(data, &filename),
-                        "10" => process_event_data::<Event10>(data, &filename),
-                        "11" => process_event_data::<Event11>(data, &filename),
-                        "12" => process_event_data::<Event12>(data, &filename),
-                        "13" => process_event_data::<Event13>(data, &filename),
-                        "14" => process_event_data::<Event14>(data, &filename),
-                        "15" => process_event_data::<Event15>(data, &filename),
-                        "17" => process_event_data::<Event17>(data, &filename),
-                        "18" => process_event_data::<Event18>(data, &filename),
-                        "22" => process_event_data::<Event22>(data, &filename),
-                        "23" => process_event_data::<Event23>(data, &filename),
-                        "25" => process_event_data::<Event25>(data, &filename),
-                        "26" => process_event_data::<Event26>(data, &filename),
-                        _ => continue,
-                    };
+    let event_codes = [
+        "1", "2", "3", "5", "7", "9", "10", "11", "12", "13", "14", "15", "17", "18", "22", "23",
+        "25", "26",
+    ];
+
+    // Use rayon's `par_iter` to process each event code in parallel.
+    event_codes.par_iter().for_each(|&event_code| {
+        // Since `fetch_data_from_es` is async, we need to run it within a Tokio runtime.
+        let runtime = tokio::runtime::Runtime::new().unwrap();
+        runtime.block_on(async {
+            match fetch_data_from_es(event_code).await {
+                Ok(datas) => {
+                    let filename = format!("{}{}{}", SAVELOCATION, event_code, CSVNAME);
+                    println!("Event {}", event_code);
+                    for data in &datas {
+                        match event_code {
+                            "1" => process_event_data::<Event1>(data, &filename),
+                            "2" => process_event_data::<Event2>(data, &filename),
+                            "3" => process_event_data::<Event3>(data, &filename),
+                            "5" => process_event_data::<Event5>(data, &filename),
+                            "7" => process_event_data::<Event7>(data, &filename),
+                            "9" => process_event_data::<Event9>(data, &filename),
+                            "10" => process_event_data::<Event10>(data, &filename),
+                            "11" => process_event_data::<Event11>(data, &filename),
+                            "12" => process_event_data::<Event12>(data, &filename),
+                            "13" => process_event_data::<Event13>(data, &filename),
+                            "14" => process_event_data::<Event14>(data, &filename),
+                            "15" => process_event_data::<Event15>(data, &filename),
+                            "17" => process_event_data::<Event17>(data, &filename),
+                            "18" => process_event_data::<Event18>(data, &filename),
+                            "22" => process_event_data::<Event22>(data, &filename),
+                            "23" => process_event_data::<Event23>(data, &filename),
+                            "25" => process_event_data::<Event25>(data, &filename),
+                            "26" => process_event_data::<Event26>(data, &filename),
+                            _ => continue,
+                        }
+                    }
                 }
+                Err(err) => eprintln!("Error: {:?}", err),
             }
-            Err(err) => eprintln!("Error: {:?}", err),
-        }
-    }
+        });
+    });
 }
 
 // Printout counts each events
