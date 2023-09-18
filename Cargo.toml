@@ -4,20 +4,20 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Joe <joe@cluml.com>"]
 readme = "README.md"
-repository = "https://github.com/dongju93/elarocks"
+repository = "https://github.com/dongju93/sysmon-to-rocksdb"
 
 [dependencies]
+base64 = "0.21.2"
+chrono = {version="0.4.26", features = ["serde"]}
+csv = "1.2.2"
+elasticsearch = "8.5.0-alpha.1"
+rayon = "1.7.0"
+reqwest = {version="0.11.18", features=["json"]}
+rocksdb = "0.21.0"
+serde ={version = "1.0.182", features = ["derive"]}
 serde_json = "1.0.104"
 tokio = {version="1.29.1", features=["full"]}
-reqwest = {version="0.11.18", features=["json"]}
-elasticsearch = "8.5.0-alpha.1"
-base64 = "0.21.2"
-serde ={version = "1.0.182", features = ["derive"]}
-rocksdb = "0.21.0"
-csv = "1.2.2"
-chrono = {version="0.4.26", features = ["serde"]}
 tokio-postgres = "0.7.10"
-rayon = "1.7.0"
 
 [[bin]]
 name = "main"
