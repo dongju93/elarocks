@@ -17,3 +17,17 @@ db.open((err) => {
         console.log(`🚀 Server ready at ${url}`);
     });
 });
+
+process.on("SIGINT", gracefulShutdown);
+process.on("SIGTERM", gracefulShutdown);
+
+function gracefulShutdown() {
+    db.close((err) => {
+        if (err) {
+            console.error("Error closing RocksDB:", err);
+        } else {
+            console.log("RocksDB closed successfully.");
+        }
+        process.exit();
+    });
+}
