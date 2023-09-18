@@ -22,6 +22,9 @@ async function fetchDataBasedOnTime(event, start, end) {
         case "Process Create":
             query = process.env.SQL_QUERY_PRO;
             break;
+        case "Network connection detected":
+            query = process.env.SQL_QUERY_NET;
+            break;
         default:
             throw new Error(`Unsupported event type: ${event}`);
     }

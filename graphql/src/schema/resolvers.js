@@ -15,6 +15,12 @@ const resolvers = {
             }
             return fetchSysmonData(filter, "ProcessCreateEve");
         },
+        NetworkConnectionEve: async (parent, { filter }, context, info) => {
+            if (filter.event !== "Network connection detected") {
+                throw new Error("Invalid event for NetworkConnectionEve query");
+            }
+            return fetchSysmonData(filter, "NetworkConnectionEve");
+        },
     },
 };
 
@@ -44,6 +50,11 @@ async function fetchSysmonData(filter, nodeType) {
                 totalCount: allResults.length,
             };
         case "ProcessCreateEve":
+            return {
+                Node: allResults,
+                totalCount: allResults.length,
+            };
+        case "NetworkConnectionEve":
             return {
                 Node: allResults,
                 totalCount: allResults.length,

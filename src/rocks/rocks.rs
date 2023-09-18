@@ -235,16 +235,16 @@ fn process_csv(config: &CsvConfig) -> Result<(), Box<dyn Error>> {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let configs = vec![
-        CsvConfig {
-            csv_path: format!("{}{}", CSV_LOCA, "event1_logs.csv"),
-            event_type: EventType::ProcessCreate,
-            query: DBINSE_PRO,
-        },
-        CsvConfig {
-            csv_path: format!("{}{}", CSV_LOCA, "event13_logs.csv"),
-            event_type: EventType::RegistryValueSet,
-            query: DBINSE_REG,
-        },
+        // CsvConfig {
+        //     csv_path: format!("{}{}", CSV_LOCA, "event13_logs.csv"),
+        //     event_type: EventType::RegistryValueSet,
+        //     query: DBINSE_REG,
+        // },
+        // CsvConfig {
+        //     csv_path: format!("{}{}", CSV_LOCA, "event1_logs.csv"),
+        //     event_type: EventType::ProcessCreate,
+        //     query: DBINSE_PRO,
+        // },
         CsvConfig {
             csv_path: format!("{}{}", CSV_LOCA, "event3_logs.csv"),
             event_type: EventType::NetworkConnection,
