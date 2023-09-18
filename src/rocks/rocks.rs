@@ -1,6 +1,8 @@
 use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use csv::ReaderBuilder;
-use rocksdb::{WriteBatch, WriteOptions, DB};
+use rocksdb::{
+    OptimisticTransactionDB, OptimisticTransactionOptions, Options, SingleThreaded, WriteOptions,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::to_vec;
 use std::error::Error;
@@ -187,14 +189,17 @@ fn process_record(
 }
 
 fn process_csv(config: &CsvConfig) -> Result<(), Box<dyn Error>> {
-    let db = DB::open_default(DB_LOCA)?;
+    let mut opts = Options::default();
+    opts.create_if_missing(true);
+    let db: OptimisticTransactionDB<SingleThreaded> =
+        OptimisticTransactionDB::open(&opts, DB_LOCA)?;
+
     let mut rdr = ReaderBuilder::new()
         .has_headers(true)
         .delimiter(b'\t')
         .from_path(&config.csv_path)?;
 
-    let mut write_batch = WriteBatch::default();
-    let write_options = WriteOptions::default();
+    let transaction = db.transaction();
 
     let mut counter: u32 = 0;
     let mut previous_utc_time = String::new();
@@ -224,32 +229,32 @@ fn process_csv(config: &CsvConfig) -> Result<(), Box<dyn Error>> {
 
         keys_to_save.push(key.clone());
         counter += 1;
-        write_batch.put(key.as_bytes(), &serialized_value);
+        transaction.put(key.as_bytes(), &serialized_value)?;
     }
 
     tokio::runtime::Runtime::new()?.block_on(save_keys_to_postgres(&keys_to_save, config.query))?;
-    db.write_opt(write_batch, &write_options)?;
+    transaction.commit()?;
 
     Ok(())
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let configs = vec![
-        // CsvConfig {
-        //     csv_path: format!("{}{}", CSV_LOCA, "event13_logs.csv"),
-        //     event_type: EventType::RegistryValueSet,
-        //     query: DBINSE_REG,
-        // },
+        CsvConfig {
+            csv_path: format!("{}{}", CSV_LOCA, "event13_logs.csv"),
+            event_type: EventType::RegistryValueSet,
+            query: DBINSE_REG,
+        },
         // CsvConfig {
         //     csv_path: format!("{}{}", CSV_LOCA, "event1_logs.csv"),
         //     event_type: EventType::ProcessCreate,
         //     query: DBINSE_PRO,
         // },
-        CsvConfig {
-            csv_path: format!("{}{}", CSV_LOCA, "event3_logs.csv"),
-            event_type: EventType::NetworkConnection,
-            query: DBINSE_NET,
-        },
+        // CsvConfig {
+        //     csv_path: format!("{}{}", CSV_LOCA, "event3_logs.csv"),
+        //     event_type: EventType::NetworkConnection,
+        //     query: DBINSE_NET,
+        // },
     ];
 
     for config in &configs {
