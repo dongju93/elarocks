@@ -73,7 +73,6 @@ const typeDefs = gql`
     }
 
     input SysmonFilter {
-        event: String!
         datetime: DateTimeRange!
         process_id: String
         user: String

@@ -9,13 +9,13 @@ const client = new Client({
 });
 client.connect();
 
-async function fetchDataBasedOnTime(event, start, end) {
+async function fetchDataBasedOnTime(nodeType, start, end) {
     start = start.replace("T", " ").replace("Z", "00000");
     end = end.replace("T", " ").replace("Z", "99999");
     // console.log(start+" and "+end)
 
     let query;
-    switch (event) {
+    switch (nodeType) {
         case "Registry value set":
             query = process.env.SQL_QUERY_REG;
             break;
@@ -26,7 +26,7 @@ async function fetchDataBasedOnTime(event, start, end) {
             query = process.env.SQL_QUERY_NET;
             break;
         default:
-            throw new Error(`Unsupported event type: ${event}`);
+            throw new Error(`Unsupported event type: ${nodeType}`);
     }
 
     try {

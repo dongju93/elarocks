@@ -9,10 +9,7 @@ const resolvers = {
             context,
             info
         ) => {
-            if (filter.event !== "Registry value set") {
-                throw new Error("Invalid event for RegValueSetEve query");
-            }
-            return fetchSysmonData(filter, "RegValueSetEve", pagination);
+            return fetchSysmonData(filter, "Registry value set", pagination);
         },
         ProcessCreateEve: async (
             parent,
@@ -20,10 +17,7 @@ const resolvers = {
             context,
             info
         ) => {
-            if (filter.event !== "Process Create") {
-                throw new Error("Invalid event for ProcessCreateEve query");
-            }
-            return fetchSysmonData(filter, "ProcessCreateEve", pagination);
+            return fetchSysmonData(filter, "Process Create", pagination);
         },
         NetworkConnectionEve: async (
             parent,
@@ -31,16 +25,17 @@ const resolvers = {
             context,
             info
         ) => {
-            if (filter.event !== "Network connection detected") {
-                throw new Error("Invalid event for NetworkConnectionEve query");
-            }
-            return fetchSysmonData(filter, "NetworkConnectionEve", pagination);
+            return fetchSysmonData(
+                filter,
+                "Network connection detected",
+                pagination
+            );
         },
     },
 };
 
 async function fetchSysmonData(filter, nodeType, pagination) {
-    const { event, datetime, process_id, user, agent_id } = filter;
+    const { datetime, process_id, user, agent_id } = filter;
     const { start, end } = datetime;
     const filters = [];
     const allResults = [];
@@ -48,11 +43,7 @@ async function fetchSysmonData(filter, nodeType, pagination) {
     const DEFAULT_LIMIT = 10;
     const offset = pagination?.offset || DEFAULT_OFFSET;
     const limit = pagination?.limit || DEFAULT_LIMIT;
-    const postgresResults = await fetchDataBasedOnTime(
-        filter.event,
-        start,
-        end
-    );
+    const postgresResults = await fetchDataBasedOnTime(nodeType, start, end);
 
     if (process_id) {
         filters.push((result) => result.process_id == process_id);
@@ -69,7 +60,7 @@ async function fetchSysmonData(filter, nodeType, pagination) {
     }
 
     for (const row of postgresResults) {
-        const key = `${filter.event}_${row.savedtime}`;
+        const key = `${nodeType}_${row.savedtime}`;
         const result = await fetchKey(key);
         // use every method to check filters is true
         if (result) {
@@ -87,17 +78,17 @@ async function fetchSysmonData(filter, nodeType, pagination) {
     // console.log("Final allResults:", allResults);
 
     switch (nodeType) {
-        case "RegValueSetEve":
+        case "Registry value set":
             return {
                 node: allResults.slice(offset, offset + limit),
                 totalCount: allResults.length,
             };
-        case "ProcessCreateEve":
+        case "Process Create":
             return {
                 node: allResults.slice(offset, offset + limit),
                 totalCount: allResults.length,
             };
-        case "NetworkConnectionEve":
+        case "Network connection detected":
             return {
                 node: allResults.slice(offset, offset + limit),
                 totalCount: allResults.length,
