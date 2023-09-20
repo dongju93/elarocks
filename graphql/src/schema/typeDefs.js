@@ -90,6 +90,7 @@ const typeDefs = gql`
         datetime: DateTimeRange!
         process_id: String
         user: String
+        agent_id: String
     }
 
     type Query {

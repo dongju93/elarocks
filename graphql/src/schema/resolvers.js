@@ -25,7 +25,7 @@ const resolvers = {
 };
 
 async function fetchSysmonData(filter, nodeType) {
-    const { event, datetime, process_id, user } = filter;
+    const { event, datetime, process_id, user, agent_id } = filter;
     const { start, end } = datetime;
     const postgresResults = await fetchDataBasedOnTime(
         filter.event,
@@ -33,33 +33,49 @@ async function fetchSysmonData(filter, nodeType) {
         end
     );
 
+    const filters = [];
+
+    if (process_id) {
+        filters.push((result) => result.process_id == process_id);
+    }
+
+    if (user) {
+        filters.push((result) => result.user == user);
+    }
+
+    if (agent_id) {
+        filters.push(
+            (result) => result.agent_id && result.agent_id.includes(agent_id)
+        );
+    }
+
     const allResults = [];
     for (const row of postgresResults) {
         const key = `${filter.event}_${row.savedtime}`;
         const result = await fetchKey(key);
+        // use every method to check filters is true
         if (result) {
-            if (process_id && user) {
-                if (result.process_id == process_id && result.user == user) {
-                    allResults.push(result);
-                } else {
-                    allResults.push();
-                }
-            } else if (process_id) {
-                if (result.process_id == process_id) {
-                    allResults.push(result);
-                } else {
-                    allResults.push();
-                }
-            } else if (user) {
-                if (result.user == user) {
-                    allResults.push(result);
-                } else {
-                    allResults.push();
-                }
-            } else {
+            if (filters.every((filterFn) => filterFn(result))) {
                 allResults.push(result);
+            } else {
+                allResults.push();
             }
         }
+
+        // if (result) {
+        //     let matches = true;
+        //     if (process_id) {
+        //         matches = matches && result.process_id == process_id;
+        //     }
+        //     if (user) {
+        //         matches = matches && result.user == user;
+        //     }
+        //     if (matches) {
+        //         allResults.push(result);
+        //     } else {
+        //         allResults.push();
+        //     }
+        // }
     }
 
     // console.log("Final allResults:", allResults);
