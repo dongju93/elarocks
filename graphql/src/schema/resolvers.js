@@ -3,37 +3,56 @@ const { fetchDataBasedOnTime } = require("../fetchData");
 
 const resolvers = {
     Query: {
-        RegValueSetEve: async (parent, { filter }, context, info) => {
+        RegValueSetEve: async (
+            parent,
+            { filter, pagination },
+            context,
+            info
+        ) => {
             if (filter.event !== "Registry value set") {
                 throw new Error("Invalid event for RegValueSetEve query");
             }
-            return fetchSysmonData(filter, "RegValueSetEve");
+            return fetchSysmonData(filter, "RegValueSetEve", pagination);
         },
-        ProcessCreateEve: async (parent, { filter }, context, info) => {
+        ProcessCreateEve: async (
+            parent,
+            { filter, pagination },
+            context,
+            info
+        ) => {
             if (filter.event !== "Process Create") {
                 throw new Error("Invalid event for ProcessCreateEve query");
             }
-            return fetchSysmonData(filter, "ProcessCreateEve");
+            return fetchSysmonData(filter, "ProcessCreateEve", pagination);
         },
-        NetworkConnectionEve: async (parent, { filter }, context, info) => {
+        NetworkConnectionEve: async (
+            parent,
+            { filter, pagination },
+            context,
+            info
+        ) => {
             if (filter.event !== "Network connection detected") {
                 throw new Error("Invalid event for NetworkConnectionEve query");
             }
-            return fetchSysmonData(filter, "NetworkConnectionEve");
+            return fetchSysmonData(filter, "NetworkConnectionEve", pagination);
         },
     },
 };
 
-async function fetchSysmonData(filter, nodeType) {
+async function fetchSysmonData(filter, nodeType, pagination) {
     const { event, datetime, process_id, user, agent_id } = filter;
     const { start, end } = datetime;
+    const filters = [];
+    const allResults = [];
+    const DEFAULT_OFFSET = 0;
+    const DEFAULT_LIMIT = 10;
+    const offset = pagination?.offset || DEFAULT_OFFSET;
+    const limit = pagination?.limit || DEFAULT_LIMIT;
     const postgresResults = await fetchDataBasedOnTime(
         filter.event,
         start,
         end
     );
-
-    const filters = [];
 
     if (process_id) {
         filters.push((result) => result.process_id == process_id);
@@ -49,33 +68,20 @@ async function fetchSysmonData(filter, nodeType) {
         );
     }
 
-    const allResults = [];
     for (const row of postgresResults) {
         const key = `${filter.event}_${row.savedtime}`;
         const result = await fetchKey(key);
         // use every method to check filters is true
         if (result) {
+            if (result.hashes) {
+                result.hashes = result.hashes.split(",");
+            }
             if (filters.every((filterFn) => filterFn(result))) {
                 allResults.push(result);
             } else {
                 allResults.push();
             }
         }
-
-        // if (result) {
-        //     let matches = true;
-        //     if (process_id) {
-        //         matches = matches && result.process_id == process_id;
-        //     }
-        //     if (user) {
-        //         matches = matches && result.user == user;
-        //     }
-        //     if (matches) {
-        //         allResults.push(result);
-        //     } else {
-        //         allResults.push();
-        //     }
-        // }
     }
 
     // console.log("Final allResults:", allResults);
@@ -83,17 +89,17 @@ async function fetchSysmonData(filter, nodeType) {
     switch (nodeType) {
         case "RegValueSetEve":
             return {
-                Node: allResults,
+                node: allResults.slice(offset, offset + limit),
                 totalCount: allResults.length,
             };
         case "ProcessCreateEve":
             return {
-                Node: allResults,
+                node: allResults.slice(offset, offset + limit),
                 totalCount: allResults.length,
             };
         case "NetworkConnectionEve":
             return {
-                Node: allResults,
+                node: allResults.slice(offset, offset + limit),
                 totalCount: allResults.length,
             };
         default:

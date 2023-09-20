@@ -1,18 +1,14 @@
 const { gql } = require("apollo-server");
-
 const typeDefs = gql`
-    type ProcessCreateEveResponse {
-        Node: [ProcessCreateEve!]
-        totalCount: Int
-    }
-
+    # query type
+    scalar DateTime
     type ProcessCreateEve {
         agent_name: String!
         agent_id: String!
         event_action: String!
         utc_time: String!
         process_guid: String!
-        process_id: String!
+        process_id: Int!
         image: String!
         file_version: String!
         description: String!
@@ -22,20 +18,15 @@ const typeDefs = gql`
         command_line: String!
         user: String!
         logon_guid: String!
-        logon_id: String!
-        terminal_session_id: String!
+        logon_id: Int!
+        terminal_session_id: Int!
         integrity_level: String!
-        hashes: String!
+        hashes: [String!]
         parent_process_guid: String!
-        parent_process_id: String!
+        parent_process_id: Int!
         parent_image: String!
         parent_command_line: String!
         parent_user: String!
-    }
-
-    type RegValueSetEveResponse {
-        Node: [RegValueSetEve!]
-        totalCount: Int
     }
 
     type RegValueSetEve {
@@ -52,34 +43,30 @@ const typeDefs = gql`
         user: String!
     }
 
-    type NetworkConnectionEveResponse {
-        Node: [NetworkConnectionEve!]
-        totalCount: Int
-    }
-
     type NetworkConnectionEve {
         agent_name: String!
         agent_id: String!
         event_action: String!
         utc_time: String!
         process_guid: String!
-        process_id: String!
+        process_id: Int!
         image: String!
         user: String!
         protocol: String!
-        initiated: String!
-        source_is_ipv6: String!
+        initiated: Boolean!
+        source_is_ipv6: Boolean!
         source_ip: String!
         source_hostname: String!
-        source_port: String!
+        source_port: Int!
         source_port_name: String!
-        destination_is_ipv6: String!
+        destination_is_ipv6: Boolean!
         destination_ip: String!
         destination_hostname: String!
-        destination_port: String!
+        destination_port: Int!
         destination_port_name: String!
     }
 
+    # input filter
     input DateTimeRange {
         start: String!
         end: String!
@@ -93,12 +80,40 @@ const typeDefs = gql`
         agent_id: String
     }
 
+    # node, paginaion(offset, limit)
+    type ProcessCreateEveConnection {
+        node: [ProcessCreateEve!]
+        totalCount: Int
+    }
+
+    type RegValueSetEveConnection {
+        node: [RegValueSetEve!]
+        totalCount: Int
+    }
+
+    type NetworkConnectionEveConnection {
+        node: [NetworkConnectionEve!]
+        totalCount: Int
+    }
+
+    input PaginationInput {
+        offset: Int
+        limit: Int
+    }
+
     type Query {
-        RegValueSetEve(filter: SysmonFilter!): RegValueSetEveResponse
-        ProcessCreateEve(filter: SysmonFilter!): ProcessCreateEveResponse
+        RegValueSetEve(
+            filter: SysmonFilter!
+            pagination: PaginationInput
+        ): RegValueSetEveConnection
+        ProcessCreateEve(
+            filter: SysmonFilter!
+            pagination: PaginationInput
+        ): ProcessCreateEveConnection
         NetworkConnectionEve(
             filter: SysmonFilter!
-        ): NetworkConnectionEveResponse
+            pagination: PaginationInput
+        ): NetworkConnectionEveConnection
     }
 `;
 
