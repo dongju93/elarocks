@@ -88,12 +88,16 @@ const typeDefs = gql`
     input SysmonFilter {
         event: String!
         datetime: DateTimeRange!
+        process_id: String
+        user: String
     }
 
     type Query {
         RegValueSetEve(filter: SysmonFilter!): RegValueSetEveResponse
         ProcessCreateEve(filter: SysmonFilter!): ProcessCreateEveResponse
-        NetworkConnectionEve(filter: SysmonFilter!): NetworkConnectionEveResponse
+        NetworkConnectionEve(
+            filter: SysmonFilter!
+        ): NetworkConnectionEveResponse
     }
 `;
 

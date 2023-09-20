@@ -25,7 +25,8 @@ const resolvers = {
 };
 
 async function fetchSysmonData(filter, nodeType) {
-    const { start, end } = filter.datetime;
+    const { event, datetime, process_id, user } = filter;
+    const { start, end } = datetime;
     const postgresResults = await fetchDataBasedOnTime(
         filter.event,
         start,
@@ -37,7 +38,27 @@ async function fetchSysmonData(filter, nodeType) {
         const key = `${filter.event}_${row.savedtime}`;
         const result = await fetchKey(key);
         if (result) {
-            allResults.push(result);
+            if (process_id && user) {
+                if (result.process_id == process_id && result.user == user) {
+                    allResults.push(result);
+                } else {
+                    allResults.push();
+                }
+            } else if (process_id) {
+                if (result.process_id == process_id) {
+                    allResults.push(result);
+                } else {
+                    allResults.push();
+                }
+            } else if (user) {
+                if (result.user == user) {
+                    allResults.push(result);
+                } else {
+                    allResults.push();
+                }
+            } else {
+                allResults.push(result);
+            }
         }
     }
 
