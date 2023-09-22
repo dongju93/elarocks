@@ -1,3 +1,6 @@
+mod implement;
+
+use implement::EventToCSV;
 use serde::Serialize;
 
 // Sysmon structs with each evnet.code
@@ -368,4 +371,17 @@ pub struct Event26 {
     pub target_filename: Option<String>,
     pub hashes: Option<String>,
     pub is_executable: Option<String>,
+}
+
+// Printout counts each events
+pub(crate) fn process_event_data<T: EventToCSV>(
+    data: &serde_json::Value,
+    filename: &str,
+    size: usize,
+) {
+    let entries = T::parse(data);
+    println!("Data counts(Max: {size}): {}", entries.len());
+    if let Err(e) = T::write_to_csv(&entries, filename) {
+        eprintln!("Error writing to CSV: {e:?}");
+    }
 }
