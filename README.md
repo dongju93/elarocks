@@ -29,6 +29,19 @@ cargo build --release
 // run with config
 ./elarocks config.toml
 ```
+
+To check dependencies size
+```
+// install bloat
+cargo install cargo-bloat --no-default-features
+
+// comment line out in Cargo.toml
+#strip = true
+
+// Check out
+cargo bloat --release --crates
+//
+```
 </br>
 
 #### Copyright 2023. ClumL Inc. all rights reserved 
