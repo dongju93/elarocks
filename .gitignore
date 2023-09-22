@@ -12,3 +12,4 @@ auto.sh
 /graphql/node_modules
 /graphql/package-lock.json
 */**/.env
+config.toml
