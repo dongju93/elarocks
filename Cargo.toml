@@ -7,13 +7,19 @@ readme = "README.md"
 repository = "https://github.com/dongju93/sysmon-to-rocksdb"
 
 [dependencies]
-anyhow = "1"
-base64 = "0.21.2"
-config = { version = "0.13", features = ["toml"], default-features = false }
+anyhow = "1.0.75"
+base64 = "0.21.4"
+config = { version = "0.13.3", features = ["toml"], default-features = false }
 csv = "1.2.2"
 elasticsearch = "8.5.0-alpha.1"
-rayon = "1.7.0"
-reqwest = {version="0.11.18", features=["json"]}
-serde ={version = "1.0.182", features = ["derive"]}
-serde_json = "1.0.104"
-tokio = {version="1.29.1", features=["full"]}
+rayon = "1.8.0"
+reqwest = {version="0.11.20", features=["json"]}
+serde ={version = "1.0.188", features = ["derive"]}
+serde_json = "1.0.107"
+tokio = {version="1.32.0", features=["full"]}
+
+[profile.release]
+strip = true
+opt-level = "s"
+lto = true
+codegen-units = 1
