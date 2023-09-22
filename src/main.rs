@@ -792,7 +792,7 @@ impl EventToCSV for Event10 {
                                 "TargetThreadId" => {
                                     entry.target_thread_id = Some(value.to_string())
                                 }
-                                "TargetImage" => entry.source_image = Some(value.to_string()),
+                                "TargetImage" => entry.target_image = Some(value.to_string()),
                                 "GrantedAccess" => entry.granted_access = Some(value.to_string()),
                                 "CallTrace" => entry.call_trace = Some(value.to_string()),
                                 "SourceUser" => entry.source_user = Some(value.to_string()),
