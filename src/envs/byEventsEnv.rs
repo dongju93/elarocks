@@ -1,8 +1,9 @@
 #![allow(dead_code)]
 
 use super::env::*;
-use serde_json::json;
+use base64::{engine::general_purpose, Engine as _};
 use reqwest::header;
+use serde_json::json;
 
 // change EVE_CODE to exact byEvents number
 pub const INDEX: &str = ".ds-winlogbeat-8.8.2-2023.08.06-000001";
@@ -55,10 +56,12 @@ pub fn build_query() -> serde_json::Value {
 
 pub fn build_client() -> Result<reqwest::Client, reqwest::Error> {
     let auth_value = format!("{}:{}", ID, PW);
-    let basic_auth_header = format!("Basic {}", base64::encode(auth_value));
+    let auth_value_bytes = auth_value.as_bytes();
+    let encoded: String = general_purpose::STANDARD_NO_PAD.encode(auth_value_bytes);
+    let basic_auth_header = format!("Basic {}", encoded);
 
     reqwest::Client::builder()
-        .danger_accept_invalid_certs(true) 
+        .danger_accept_invalid_certs(true)
         .default_headers({
             let mut headers = header::HeaderMap::new();
             headers.insert(

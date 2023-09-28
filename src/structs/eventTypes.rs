@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 extern crate chrono;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

@@ -1,15 +1,19 @@
-use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime, Utc};
+#[allow(unused_imports)]
+use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
 use csv::ReaderBuilder;
+#[allow(unused_imports)]
 use rocksdb::{
     OptimisticTransactionDB, OptimisticTransactionOptions, Options, SingleThreaded, WriteOptions,
 };
+#[allow(unused_imports)]
 use serde::{Deserialize, Serialize};
 use serde_json::to_vec;
 use std::error::Error;
 use std::net::{IpAddr, Ipv4Addr};
+#[allow(unused_imports)]
 use std::ptr::null;
+#[allow(unused_imports)]
 use tokio_postgres::{Client, NoTls};
-
 #[path = "../structs/mod.rs"]
 mod structs;
 use structs::eventTypes::*;
@@ -23,6 +27,7 @@ struct CsvConfig {
     query: &'static str,
 }
 
+#[allow(dead_code)]
 enum EventType {
     ProcessCreate,
     RegistryValueSet,
@@ -58,7 +63,7 @@ fn process_record(
 ) -> Result<Vec<u8>, Box<dyn Error>> {
     let naive_dt =
         NaiveDateTime::parse_from_str(record.get(3).unwrap_or_default(), "%Y-%m-%d %H:%M:%S%.3f")?;
-    let utc_time = DateTime::<Utc>::from_utc(naive_dt, Utc);
+    let utc_time = Utc.from_utc_datetime(&naive_dt);
 
     match event_type {
         EventType::ProcessCreate => {
@@ -183,8 +188,7 @@ fn process_record(
                 destination_port_name: record.get(19).unwrap_or_default().to_string(),
             };
             to_vec(&event).map_err(|e| Box::new(e) as Box<dyn Error>)
-        }
-        _ => Err(Box::from("Unknown event type")),
+        } // _ => Err(Box::from("Unknown event type")),
     }
 }
 
@@ -212,7 +216,7 @@ fn process_csv(config: &CsvConfig) -> Result<(), Box<dyn Error>> {
             record.get(3).unwrap_or_default(),
             "%Y-%m-%d %H:%M:%S%.3f",
         )?;
-        let utc_time = DateTime::<Utc>::from_utc(naive_dt, Utc);
+        let utc_time = Utc.from_utc_datetime(&naive_dt);
 
         if previous_utc_time != utc_time.to_string() {
             counter = 0;

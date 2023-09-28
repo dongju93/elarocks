@@ -8,80 +8,26 @@ repository = "https://github.com/dongju93/sysmon-to-rocksdb"
 
 [dependencies]
 base64 = "0.21.4"
-chrono = {version="0.4.31", features = ["serde"]}
+chrono = { version = "0.4.31", features = ["serde"] }
 csv = "1.2.2"
 elasticsearch = "8.5.0-alpha.1"
 rayon = "1.8.0"
-reqwest = {version="0.11.20", features=["json"]}
+reqwest = { version = "0.11.20", features = ["json"] }
 rocksdb = "0.21.0"
-serde ={version = "1.0.188", features = ["derive"]}
+serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
-tokio = {version="1.32.0", features=["full"]}
+tokio = { version = "1.32.0", features = ["full"] }
 tokio-postgres = "0.7.10"
+
+[profile.release]
+strip = true
+opt-level = "s"
+lto = true
+codegen-units = 1
 
 [[bin]]
 name = "main"
 path = "src/main.rs"
-
-[[bin]]
-name = "events"
-path = "src/byEvents/main_byEvents.rs"
-
-[[bin]]
-name = "main1"
-path = "src/byEvents/main1.rs"
-
-[[bin]]
-name = "main2"
-path = "src/byEvents/main2.rs"
-
-[[bin]]
-name = "main3"
-path = "src/byEvents/main3.rs"
-
-[[bin]]
-name = "main5"
-path = "src/byEvents/main5.rs"
-
-[[bin]]
-name = "main7"
-path = "src/byEvents/main7.rs"
-
-[[bin]]
-name = "main11"
-path = "src/byEvents/main11.rs"
-
-[[bin]]
-name = "main13"
-path = "src/byEvents/main13.rs"
-
-[[bin]]
-name = "main14"
-path = "src/byEvents/main14.rs"
-
-[[bin]]
-name = "main15"
-path = "src/byEvents/main15.rs"
-
-[[bin]]
-name = "main17"
-path = "src/byEvents/main17.rs"
-
-[[bin]]
-name = "main22"
-path = "src/byEvents/main22.rs"
-
-[[bin]]
-name = "main23"
-path = "src/byEvents/main23.rs"
-
-[[bin]]
-name = "main25"
-path = "src/byEvents/main25.rs"
-
-[[bin]]
-name = "main26"
-path = "src/byEvents/main26.rs"
 
 [[bin]]
 name = "rocks"
@@ -90,3 +36,63 @@ path = "src/rocks/rocks.rs"
 [[bin]]
 name = "select"
 path = "src/rocks/select.rs"
+
+# [[bin]]
+# name = "events"
+# path = "src/byEvents/main_byEvents.rs"
+
+# [[bin]]
+# name = "main1"
+# path = "src/byEvents/main1.rs"
+
+# [[bin]]
+# name = "main2"
+# path = "src/byEvents/main2.rs"
+
+# [[bin]]
+# name = "main3"
+# path = "src/byEvents/main3.rs"
+
+# [[bin]]
+# name = "main5"
+# path = "src/byEvents/main5.rs"
+
+# [[bin]]
+# name = "main7"
+# path = "src/byEvents/main7.rs"
+
+# [[bin]]
+# name = "main11"
+# path = "src/byEvents/main11.rs"
+
+# [[bin]]
+# name = "main13"
+# path = "src/byEvents/main13.rs"
+
+# [[bin]]
+# name = "main14"
+# path = "src/byEvents/main14.rs"
+
+# [[bin]]
+# name = "main15"
+# path = "src/byEvents/main15.rs"
+
+# [[bin]]
+# name = "main17"
+# path = "src/byEvents/main17.rs"
+
+# [[bin]]
+# name = "main22"
+# path = "src/byEvents/main22.rs"
+
+# [[bin]]
+# name = "main23"
+# path = "src/byEvents/main23.rs"
+
+# [[bin]]
+# name = "main25"
+# path = "src/byEvents/main25.rs"
+
+# [[bin]]
+# name = "main26"
+# path = "src/byEvents/main26.rs"
