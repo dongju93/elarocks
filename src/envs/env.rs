@@ -14,8 +14,8 @@ pub const INDICES: [&str; 2] = [
 ];
 
 // Search start and end timestamp
-pub const TIMESTAMP_STA: &str = "2023-08-06T15:00:00.000Z";
-pub const TIMESTAMP: &str = "2023-09-07T02:00:00.000Z";
+pub const TIMESTAMP_START: &str = "2023-08-06T15:00:00.000Z";
+pub const TIMESTAMP_END: &str = "2023-09-07T02:00:00.000Z";
 
 // Query size
 pub const SIZE: usize = 100;

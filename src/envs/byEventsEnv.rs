@@ -10,8 +10,8 @@ pub const INDEX: &str = ".ds-winlogbeat-8.8.2-2023.08.06-000001";
 const EVE_CODE: &str = "13";
 
 // change TIMESTAMP if needed
-// const TIMESTAMP_STA: &str = "2023-08-01T00:00:00.000Z";
-// const TIMESTAMP: &str = "2023-08-01T00:00:00.000Z";
+// const TIMESTAMP_START: &str = "2023-08-01T00:00:00.000Z";
+// const TIMESTAMP_END: &str = "2023-08-01T00:00:00.000Z";
 
 pub fn build_query() -> serde_json::Value {
     json!({
@@ -20,7 +20,7 @@ pub fn build_query() -> serde_json::Value {
                 "must": [
                     { "term": {"event.code": EVE_CODE} },
                     { "term": {"event.module": "sysmon"} },
-                    { "range": {"@timestamp": {"gt": TIMESTAMP_STA, "lt": TIMESTAMP}} },
+                    { "range": {"@timestamp": {"gt": TIMESTAMP_START, "lt": TIMESTAMP_END}} },
                     // Used instead of wildcard when message's type is "match_only_text"
                     // { "query_string": {
                     //     "fields": ["message"],

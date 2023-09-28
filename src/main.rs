@@ -42,7 +42,7 @@ fn build_query(event_code: &str) -> serde_json::Value {
                 "must": [
                     { "term": {"event.code": event_code} },
                     { "term": {"event.module": "sysmon"} },
-                    { "range": {"@timestamp": {"gt": TIMESTAMP_STA, "lt": TIMESTAMP}} },
+                    { "range": {"@timestamp": {"gt": TIMESTAMP_START, "lt": TIMESTAMP_END}} },
                     // 1. Used instead of wildcard when message's type is "match_only_text"
                     // { "query_string": {
                     //     "fields": ["message"],
