@@ -1,18 +1,15 @@
-#[allow(unused_imports)]
+#![allow(unused_imports)]
+
 use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
 use csv::ReaderBuilder;
-#[allow(unused_imports)]
 use rocksdb::{
     OptimisticTransactionDB, OptimisticTransactionOptions, Options, SingleThreaded, WriteOptions,
 };
-#[allow(unused_imports)]
 use serde::{Deserialize, Serialize};
 use serde_json::to_vec;
 use std::error::Error;
 use std::net::{IpAddr, Ipv4Addr};
-#[allow(unused_imports)]
 use std::ptr::null;
-#[allow(unused_imports)]
 use tokio_postgres::{Client, NoTls};
 #[path = "../structs/mod.rs"]
 mod structs;
