@@ -39,9 +39,10 @@ async function fetchSysmonData(filter, nodeType, pagination) {
     const { start, end } = datetime;
     const filters = [];
     const allResults = [];
-    const DEFAULT_OFFSET = 0;
+    // const DEFAULT_OFFSET = 0;
     const DEFAULT_LIMIT = 10;
-    const offset = pagination?.offset || DEFAULT_OFFSET;
+    // const offset = pagination?.offset || DEFAULT_OFFSET;
+    const afterCursor = pagination?.after;
     const limit = pagination?.limit || DEFAULT_LIMIT;
     const postgresResults = await fetchDataBasedOnTime(nodeType, start, end);
 
@@ -75,27 +76,60 @@ async function fetchSysmonData(filter, nodeType, pagination) {
         }
     }
 
+    // Sort results by utc_time
+    allResults.sort((a, b) => new Date(a.utc_time) - new Date(b.utc_time));
+
+    // If an 'after' cursor is provided, slice results to start after that cursor
+    let startIndex = 0;
+    if (afterCursor) {
+        startIndex =
+            allResults.findIndex((item) => item.utc_time === afterCursor) + 1;
+    }
+
+    // Fetch 'limit + 1' items to check for next page (pageInfo)
+    const results = allResults.slice(startIndex, startIndex + limit + 1);
+
+    const edges = results.map((item) => ({
+        cursor: item.utc_time,
+        node: item,
+    }));
+
+    // Check if we have an extra item, indicating more items to fetch
+    const hasNextPage = results.length > limit;
+    if (hasNextPage) {
+        edges.pop();
+    }
+
+    return {
+        edges,
+        pageInfo: {
+            endCursor: edges[edges.length - 1]?.cursor || null,
+            hasNextPage,
+        },
+        totalCount: allResults.length,
+    };
+
     // console.log("Final allResults:", allResults);
 
-    switch (nodeType) {
-        case "Registry value set":
-            return {
-                node: allResults.slice(offset, offset + limit),
-                totalCount: allResults.length,
-            };
-        case "Process Create":
-            return {
-                node: allResults.slice(offset, offset + limit),
-                totalCount: allResults.length,
-            };
-        case "Network connection detected":
-            return {
-                node: allResults.slice(offset, offset + limit),
-                totalCount: allResults.length,
-            };
-        default:
-            throw new Error("Invalid node type");
-    }
+    // switch (nodeType) {
+    //     case "Registry value set":
+    //         return {
+    //             node: allResults.slice(offset, offset + limit),
+    //             totalCount: allResults.length,
+    //         };
+    //     case "Process Create":
+    //         return {
+    //             node: allResults.slice(offset, offset + limit),
+    //             totalCount: allResults.length,
+    //         };
+    //     case "Network connection detected":
+    //         return {
+    //             node: allResults.slice(offset, offset + limit),
+    //             totalCount: allResults.length,
+    //         };
+    //     default:
+    //         throw new Error("Invalid node type");
+    // }
 }
 
 module.exports = resolvers;

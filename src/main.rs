@@ -122,7 +122,7 @@ async fn fetch_data_from_es(event_code: &str) -> Result<Vec<serde_json::Value>, 
     Ok(all_results)
 }
 
-// after multi-thread processing
+// sort of multi-thread processing
 #[tokio::main]
 async fn main() {
     let event_codes = [
@@ -132,7 +132,7 @@ async fn main() {
 
     // Use rayon's `par_iter` to process each event code in parallel.
     event_codes.par_iter().for_each(|&event_code| {
-        // Since `fetch_data_from_es` is async, we need to run it within a Tokio runtime.
+        // Since `fetch_data_from_es` is async, need to run it within a Tokio runtime.
         let runtime = tokio::runtime::Runtime::new().unwrap();
         runtime.block_on(async {
             match fetch_data_from_es(event_code).await {

@@ -79,24 +79,47 @@ const typeDefs = gql`
         agent_id: String
     }
 
-    # node, paginaion(offset, limit)
+    # node with edges, pagination(cursor based)
+    type PageInfo {
+        endCursor: String
+        hasNextPage: Boolean!
+    }
+
     type ProcessCreateEveConnection {
-        node: [ProcessCreateEve!]
+        edges: [ProcessCreateEveEdge!]
+        pageInfo: PageInfo!
         totalCount: Int
+    }
+
+    type ProcessCreateEveEdge {
+        cursor: String!
+        node: ProcessCreateEve!
     }
 
     type RegValueSetEveConnection {
-        node: [RegValueSetEve!]
+        edges: [RegValueSetEveEdge!]
+        pageInfo: PageInfo!
         totalCount: Int
+    }
+
+    type RegValueSetEveEdge {
+        cursor: String!
+        node: RegValueSetEve!
     }
 
     type NetworkConnectionEveConnection {
-        node: [NetworkConnectionEve!]
+        edges: [NetworkConnectionEveEdge!]
+        pageInfo: PageInfo!
         totalCount: Int
     }
 
+    type NetworkConnectionEveEdge {
+        cursor: String!
+        node: NetworkConnectionEve!
+    }
+
     input PaginationInput {
-        offset: Int
+        after: String
         limit: Int
     }
 
