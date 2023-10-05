@@ -34,16 +34,28 @@ const resolvers = {
     },
 };
 
+function datetimeToEpoch(datetime) {
+    const [datePart, timePart] = datetime.split(" ");
+    const [year, month, day] = datePart.split("-").map(Number);
+    const [hour, minute, fullSecond] = timePart.split(":");
+    const second = parseInt(fullSecond, 10);
+    const fractionalSecond = parseFloat(fullSecond) - second;
+    const nanoseconds = Math.round(fractionalSecond * 1e9);
+
+    const dateObj = new Date(
+        Date.UTC(year, month - 1, day, hour, minute, second)
+    );
+    const epochSeconds = Math.floor(dateObj.getTime() / 1000);
+
+    return `${epochSeconds}${String(nanoseconds).padStart(9, "0")}`;
+}
+
 async function fetchSysmonData(filter, nodeType, pagination) {
     const { datetime, process_id, user, agent_id } = filter;
     const { start, end } = datetime;
     const filters = [];
     const allResults = [];
-    // const DEFAULT_OFFSET = 0;
-    const DEFAULT_LIMIT = 10;
-    // const offset = pagination?.offset || DEFAULT_OFFSET;
-    const afterCursor = pagination?.after;
-    const limit = pagination?.limit || DEFAULT_LIMIT;
+    const { first, last, before, after } = pagination;
     const postgresResults = await fetchDataBasedOnTime(nodeType, start, end);
 
     if (process_id) {
@@ -68,8 +80,10 @@ async function fetchSysmonData(filter, nodeType, pagination) {
             if (result.hashes) {
                 result.hashes = result.hashes.split(",");
             }
+            // for cursor epoch
+            const epochSavedTime = datetimeToEpoch(row.savedtime);
             if (filters.every((filterFn) => filterFn(result))) {
-                allResults.push(result);
+                allResults.push({ ...result, savedtimeEpoch: epochSavedTime });
             } else {
                 allResults.push();
             }
@@ -79,26 +93,36 @@ async function fetchSysmonData(filter, nodeType, pagination) {
     // Sort results by utc_time
     allResults.sort((a, b) => new Date(a.utc_time) - new Date(b.utc_time));
 
-    // If an 'after' cursor is provided, slice results to start after that cursor
+    // before and after arguments
     let startIndex = 0;
-    if (afterCursor) {
+    if (after) {
         startIndex =
-            allResults.findIndex((item) => item.utc_time === afterCursor) + 1;
+            allResults.findIndex((item) => item.savedtimeEpoch === after) + 1;
     }
 
-    // Fetch 'limit + 1' items to check for next page (pageInfo)
-    const results = allResults.slice(startIndex, startIndex + limit + 1);
+    let endIndex = allResults.length;
+    if (before) {
+        endIndex = allResults.findIndex(
+            (item) => item.savedtimeEpoch === before
+        );
+    }
+
+    // first and last arguments
+    if (typeof first === "number") {
+        results = allResults.slice(startIndex, startIndex + first);
+    } else if (typeof last === "number") {
+        startIndex = endIndex - last > 0 ? endIndex - last : 0;
+        results = allResults.slice(startIndex, endIndex);
+    } else {
+        results = allResults.slice(startIndex, startIndex + DEFAULT_LIMIT);
+    }
 
     const edges = results.map((item) => ({
-        cursor: item.utc_time,
+        cursor: item.savedtimeEpoch,
         node: item,
     }));
 
-    // Check if we have an extra item, indicating more items to fetch
-    const hasNextPage = results.length > limit;
-    if (hasNextPage) {
-        edges.pop();
-    }
+    const hasNextPage = endIndex < allResults.length;
 
     return {
         edges,
@@ -108,28 +132,6 @@ async function fetchSysmonData(filter, nodeType, pagination) {
         },
         totalCount: allResults.length,
     };
-
-    // console.log("Final allResults:", allResults);
-
-    // switch (nodeType) {
-    //     case "Registry value set":
-    //         return {
-    //             node: allResults.slice(offset, offset + limit),
-    //             totalCount: allResults.length,
-    //         };
-    //     case "Process Create":
-    //         return {
-    //             node: allResults.slice(offset, offset + limit),
-    //             totalCount: allResults.length,
-    //         };
-    //     case "Network connection detected":
-    //         return {
-    //             node: allResults.slice(offset, offset + limit),
-    //             totalCount: allResults.length,
-    //         };
-    //     default:
-    //         throw new Error("Invalid node type");
-    // }
 }
 
 module.exports = resolvers;

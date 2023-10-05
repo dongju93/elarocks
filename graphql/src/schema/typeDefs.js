@@ -1,7 +1,6 @@
 const { gql } = require("apollo-server");
 const typeDefs = gql`
     # query type
-    scalar DateTime
     type ProcessCreateEve {
         agent_name: String!
         agent_id: String!
@@ -119,8 +118,10 @@ const typeDefs = gql`
     }
 
     input PaginationInput {
+        first: Int
+        last: Int
+        before: String
         after: String
-        limit: Int
     }
 
     type Query {
