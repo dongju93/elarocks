@@ -65,6 +65,19 @@ const typeDefs = gql`
         destination_port_name: String!
     }
 
+    union EventList = ProcessCreateEve | RegValueSetEve | NetworkConnectionEve
+
+    type EventListConnection {
+        edges: [EventListEdge!]
+        pageInfo: PageInfo!
+        totalCount: Int
+    }
+
+    type EventListEdge {
+        cursor: String!
+        node: EventList!
+    }
+
     # input filter
     input DateTimeRange {
         start: String!
@@ -82,6 +95,7 @@ const typeDefs = gql`
     type PageInfo {
         endCursor: String
         hasNextPage: Boolean!
+        hasPreviousPage: Boolean!
     }
 
     type ProcessCreateEveConnection {
@@ -125,6 +139,10 @@ const typeDefs = gql`
     }
 
     type Query {
+        eventList(
+            filter: SysmonFilter!
+            pagination: PaginationInput
+        ): EventListConnection
         RegValueSetEve(
             filter: SysmonFilter!
             pagination: PaginationInput

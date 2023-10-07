@@ -1,8 +1,10 @@
 const { fetchKey } = require("../db");
 const { fetchDataBasedOnTime } = require("../fetchData");
+const { eventList, resolveType } = require("./unionResolvers");
 
 const resolvers = {
     Query: {
+        eventList,
         RegValueSetEve: async (
             parent,
             { filter, pagination },
@@ -32,6 +34,9 @@ const resolvers = {
             );
         },
     },
+    EventList: {
+        __resolveType: resolveType,
+    },
 };
 
 function datetimeToEpoch(datetime) {
@@ -53,6 +58,7 @@ function datetimeToEpoch(datetime) {
 async function fetchSysmonData(filter, nodeType, pagination) {
     const { datetime, process_id, user, agent_id } = filter;
     const { start, end } = datetime;
+    const DEFAULT_LIMIT = 50;
     const filters = [];
     const allResults = [];
     const { first, last, before, after } = pagination;
@@ -123,12 +129,14 @@ async function fetchSysmonData(filter, nodeType, pagination) {
     }));
 
     const hasNextPage = endIndex < allResults.length;
+    const hasPreviousPage = startIndex > 0;
 
     return {
         edges,
         pageInfo: {
             endCursor: edges[edges.length - 1]?.cursor || null,
             hasNextPage,
+            hasPreviousPage,
         },
         totalCount: allResults.length,
     };
