@@ -1,15 +1,8 @@
-const { fetchDataBasedOnTime } = require("../fetchData"); // Import necessary functions
+const { fetchDataBasedOnTime } = require("../fetchData");
 
 async function eventList(parent, { filter, pagination = {} }, context, info) {
     const { datetime } = filter;
     const { start: startDate, end: endDate } = datetime;
-
-    // console.log("Start Date:", startDate);
-    // console.log("End Date:", endDate);
-    // console.log("Pagination:", pagination);
-
-    // console.log("Start Date Type:", typeof startDate);
-    // console.log("End Date Type:", typeof endDate);
 
     const processCreateEvents = await fetchDataBasedOnTime(
         "Process Create",
@@ -30,7 +23,7 @@ async function eventList(parent, { filter, pagination = {} }, context, info) {
         filter
     );
 
-    // Combine the results. You can decide the order or apply further logic here.
+    // combine the results
     const combinedResults = [
         ...processCreateEvents,
         ...regValueSetEvents,

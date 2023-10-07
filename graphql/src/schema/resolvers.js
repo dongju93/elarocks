@@ -1,3 +1,5 @@
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const { fetchKey } = require("../db");
 const { fetchDataBasedOnTime } = require("../fetchData");
 const { eventList, resolveType } = require("./unionResolvers");
