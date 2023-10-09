@@ -3,24 +3,33 @@ Elasticsearch data to .csv file
 
 create config.toml file on root dir.
 ```
-// replace YOUR...
+// Please replace "YOUR..." to your environments
 es_url = "YOUR ELASTICSEARCH URL"
 es_id = "YOUR ELASTICSEARCH ID"
 es_pw = "YOUR ELASTICSEARCH PASSWORD"
 
+// You can set multiple winlogbeat indices with array
 indices = ["YOUR INDICES"]
 
-// ADJUST START AND END TIME
+// Adjust start and end time
 start_time = "2023-08-25T15:00:00.000Z"
 end_time = "2023-09-05T15:00:00.000Z"
 
-// ADJUST EXPORT SIZE OF DATA
+// Adjust export size of data 
 query_size = 100
 
-// CSV FILE LOCATIOS
+// Csv file save location
 save_location = "YOUR LOCATION"
 ```
 
+You may need change maximum query size of elasticsearch first
+```
+// replace with your Index name
+PUT /.ds-winlogbeat-8.8.2-2023.08.06-000001/_settings
+{
+    "max_result_window": 1000000
+}
+```
 Build & Run
 ```
 // build binary
@@ -30,7 +39,7 @@ cargo build --release
 ./elarocks config.toml
 ```
 
-To check dependencies size
+(Option) To check dependencies size
 ```
 // install bloat
 cargo install cargo-bloat --no-default-features
@@ -40,7 +49,6 @@ cargo install cargo-bloat --no-default-features
 
 // Check out
 cargo bloat --release --crates
-//
 ```
 </br>
 
