@@ -1,12 +1,11 @@
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const { fetchKey } = require("../db");
 const { fetchDataBasedOnTime } = require("../fetchData");
-const { eventList, resolveType } = require("./unionResolvers");
+// for login function not yet implements
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 const resolvers = {
     Query: {
-        eventList,
         RegValueSetEve: async (
             parent,
             { filter, pagination },
@@ -35,9 +34,6 @@ const resolvers = {
                 pagination
             );
         },
-    },
-    EventList: {
-        __resolveType: resolveType,
     },
 };
 
@@ -130,8 +126,10 @@ async function fetchSysmonData(filter, nodeType, pagination) {
         node: item,
     }));
 
-    const hasNextPage = endIndex < allResults.length;
-    const hasPreviousPage = startIndex > 0;
+    const hasNextPage = before
+        ? true
+        : (after ? startIndex + first : first) < allResults.length;
+    const hasPreviousPage = before ? endIndex - last > 0 : startIndex > 0;
 
     return {
         edges,
