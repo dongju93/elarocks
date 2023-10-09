@@ -39,8 +39,8 @@ pub const INDICES: [&str; 3] = ["YOUR INDEX NAME 1", "YOUR INDEX NAME 2", "YOUR 
 3. Set timestamp, query size, save location
 - /src/envs/env.rs
 ```
-pub const TIMESTAMP_STA: &str = "START TIMESTAMP";
-pub const TIMESTAMP: &str = "END TIMESTAMP";
+pub const TIMESTAMP_START: &str = "START TIMESTAMP";
+pub const TIMESTAMP_END: &str = "END TIMESTAMP";
 
 pub const SIZE: usize = QUERY SIZE;
 
