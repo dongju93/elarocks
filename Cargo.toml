@@ -7,16 +7,15 @@ readme = "README.md"
 repository = "https://github.com/dongju93/sysmon-to-rocksdb"
 
 [dependencies]
-base64 = "0.21.4"
+base64 = "0.21.5"
 chrono = { version = "0.4.31", features = ["serde"] }
-csv = "1.2.2"
-elasticsearch = "8.5.0-alpha.1"
+csv = "1.3.0"
 rayon = "1.8.0"
-reqwest = { version = "0.11.20", features = ["json"] }
+reqwest = { version = "0.11.22", features = ["json"] }
 rocksdb = "0.21.0"
-serde = { version = "1.0.188", features = ["derive"] }
-serde_json = "1.0.107"
-tokio = { version = "1.32.0", features = ["full"] }
+serde = { version = "1.0.193", features = ["derive"] }
+serde_json = "1.0.108"
+tokio = { version = "1.34.0", features = ["full"] }
 tokio-postgres = "0.7.10"
 
 [profile.release]

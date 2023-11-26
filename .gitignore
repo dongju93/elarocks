@@ -1,14 +1,24 @@
+# Mac
+.DS_Store
+
+# Rust
 /target
 /src/envs/elastic.rs
 /src/envs/db.rs
-.DS_Store
+/vendor
 Cargo.lock
+
+# DB
 /file
 /db
+
+# GraphQL, Webapp
+*/**/node_modules
+*/**/.env
+*/**/package-lock.json
+/webapp/.next
+
+# ETC
 .vscode
 auto.bat
 auto.sh
-/vendor
-/graphql/node_modules
-/graphql/package-lock.json
-*/**/.env
