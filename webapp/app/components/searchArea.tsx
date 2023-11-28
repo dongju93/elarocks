@@ -47,11 +47,32 @@ const SearchArea: React.FC = () => {
         setSelectedOption(event.target.value);
     };
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        console.log(`Selected Option: ${selectedOption}`);
-        console.log(`Start Time: ${format(startTime, "yyyy-MM-dd HH:mm:ss")}`);
-        console.log(`End Time: ${format(endTime, "yyyy-MM-dd HH:mm:ss")}`);
+
+        try {
+            const response = await fetch("/api/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    selectedOption,
+                    startTime: format(startTime, "yyyy-MM-dd HH:mm:ss"),
+                    endTime: format(endTime, "yyyy-MM-dd HH:mm:ss"),
+                }),
+            });
+            // console.log(response);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log(data);
+        } catch (error) {
+            console.error("Failed to fetch data:", error);
+        }
     };
 
     return (
