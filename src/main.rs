@@ -22,6 +22,7 @@ fn build_client() -> Result<reqwest::Client, reqwest::Error> {
     let basic_auth_header = format!("Basic {}", encoded);
 
     reqwest::Client::builder()
+        // bypass ssl cert settings
         .danger_accept_invalid_certs(true)
         .default_headers({
             let mut headers = header::HeaderMap::new();
@@ -36,6 +37,7 @@ fn build_client() -> Result<reqwest::Client, reqwest::Error> {
 
 // Modify query
 fn build_query(event_code: &str) -> serde_json::Value {
+    // raw elasticsearch query
     json!({
         "query": {
             "bool": {
@@ -122,7 +124,7 @@ async fn fetch_data_from_es(event_code: &str) -> Result<Vec<serde_json::Value>, 
     Ok(all_results)
 }
 
-// sort of multi-thread processing
+// async main excute
 #[tokio::main]
 async fn main() {
     let event_codes = [
@@ -130,9 +132,9 @@ async fn main() {
         "25", "26",
     ];
 
-    // Use rayon's `par_iter` to process each event code in parallel.
+    // rayon `par_iter` to process each event code in parallel.
     event_codes.par_iter().for_each(|&event_code| {
-        // Since `fetch_data_from_es` is async, need to run it within a Tokio runtime.
+        // call `fetch_data_from_es` per event code and process then save files
         let runtime = tokio::runtime::Runtime::new().unwrap();
         runtime.block_on(async {
             match fetch_data_from_es(event_code).await {
@@ -141,6 +143,7 @@ async fn main() {
                     println!("Event {}", event_code);
                     for data in &datas {
                         match event_code {
+                            // call 'process_event_data' for processing each format
                             "1" => process_event_data::<Event1>(data, &filename, SIZE),
                             "2" => process_event_data::<Event2>(data, &filename, SIZE),
                             "3" => process_event_data::<Event3>(data, &filename, SIZE),

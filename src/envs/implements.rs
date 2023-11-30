@@ -1,19 +1,20 @@
 use crate::structs::events::*;
 use std::{fs, io};
 
-// A common interface for a group of types.
+// trait for json data parsing and write to csv files
 pub(crate) trait EventToCSV: Sized {
     fn parse(data: &serde_json::Value) -> Vec<Self>;
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> std::io::Result<()>;
 }
 
-// Parse json(response data) and make .csv files
 impl EventToCSV for Event1 {
+    // extract data from event
     fn parse(data: &serde_json::Value) -> Vec<Self> {
         let mut entries = Vec::new();
 
         if let Some(hits) = data["hits"]["hits"].as_array() {
             for hit in hits {
+                // parsing message field and combine with key-value
                 if let Some(message) = hit["_source"]["message"].as_str() {
                     let mut entry = Event1 {
                         agent_name: None,
@@ -105,6 +106,7 @@ impl EventToCSV for Event1 {
         entries
     }
 
+    // receive event's vec and save to files
     fn write_to_csv(entries: &Vec<Self>, filename: &str) -> io::Result<()> {
         // Check if entries is empty, and if so, return early.
         if entries.is_empty() {
@@ -116,8 +118,10 @@ impl EventToCSV for Event1 {
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
+                // write csv files \t seperate
                 .delimiter(b'\t')
-                .has_headers(false) // Don't write headers when appending.
+                // Don't write headers when appending.
+                .has_headers(false)
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
             // Create a new file if it doesn't exist.
@@ -322,7 +326,9 @@ impl EventToCSV for Event3 {
         let mut wtr = if file_exists {
             // Open the file in append mode if it exists.
             csv::WriterBuilder::new()
+                // write csv files \t seperate
                 .delimiter(b'\t')
+                // no headers when file is exists
                 .has_headers(false) // Don't write headers when appending.
                 .from_writer(fs::OpenOptions::new().append(true).open(filename)?)
         } else {
