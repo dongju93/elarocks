@@ -51,7 +51,7 @@ const SearchArea: React.FC = () => {
         event.preventDefault();
 
         try {
-            const response = await fetch("/api/", {
+            const response = await fetch("/api/gql", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -62,7 +62,7 @@ const SearchArea: React.FC = () => {
                     endTime: format(endTime, "yyyy-MM-dd HH:mm:ss"),
                 }),
             });
-            // console.log(response);
+            console.log(response);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);

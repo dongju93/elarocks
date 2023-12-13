@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import axios from "axios";
 
 interface NetworkConnectionNode {
     agent_name: string;
@@ -23,11 +24,11 @@ interface NetworkConnectionNode {
 }
 
 interface NetworkConnectionEdge {
-    cursor: string;
     node: NetworkConnectionNode;
 }
 
 interface NetworkConnectionPageInfo {
+    startCursor: string;
     endCursor: string;
     hasNextPage: boolean;
     hasPreviousPage: boolean;
@@ -45,33 +46,45 @@ interface GraphQLData {
 
 interface GraphQLResponse {
     data: GraphQLData;
-    errors?: any[]; // Adjust error typing as needed
+    errors?: any[];
 }
 
 type GraphQLQuery = {
     query: string;
     variables: {
-        [key: string]: any; // or a more specific type based on your variables
+        [key: string]: any;
     };
 };
+
+// type ResponseData = {
+//     message: string;
+// };
+
+// export async function POST(
+//     req: NextApiRequest,
+//     res: NextApiResponse<ResponseData>
+// ) {
+//     // console.log('Request Object:', req);
+//     // console.log('Response Object:', res);
+//     if (req.method === "POST") {
+//         console.log(res)
+//         res.status(200).json({ message: "POST request received" });
+//     } else {
+//         res.status(405).json({ message: "Method Not Allowed" });
+//     }
+// }
 
 export default async function POST(
     req: NextApiRequest,
     res: NextApiResponse<GraphQLResponse | { message: string }>
 ) {
-    res.setHeader("Access-Control-Allow-Origin", "*"); // Adjust as needed for your use case
-    res.setHeader(
-        "Access-Control-Allow-Methods",
-        "GET, POST, PUT, DELETE, OPTIONS"
-    );
-    res.status(200).end();
-    console.log(req.method);
     if (req.method === "POST") {
+        console.log("Request body:", req.body);
         const { startTime, endTime, last, before, selectedOption } = req.body;
 
         const graphqlQuery: GraphQLQuery = {
             query: `
-              query GetNetworkConnectionEve($start: String!, $end: String!, $last: Int, $before: String) {
+              query GetNetworkConnectionEve($start: String!, $end: String!, $last: Int) {
                   NetworkConnectionEve(
                       filter: {
                           datetime: {
@@ -123,21 +136,32 @@ export default async function POST(
             },
         };
 
-        console.log(graphqlQuery);
+        const requestConfig = {
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
+            body: graphqlQuery,
+        };
+
+        console.log("Request Method:", requestConfig.method);
+        console.log("Request Headers:", requestConfig.headers);
+        console.log("Request Body:", requestConfig.body);
 
         try {
-            const response = await fetch("http://localhost:4000/", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(graphqlQuery),
-            });
+            const response = await axios.post(
+                "http://localhost:4000/",
+                graphqlQuery,
+                {
+                    headers: requestConfig.headers,
+                }
+            );
 
-            const data: GraphQLResponse = await response.json();
-            res.status(200).json(data);
+            res.status(200).json(response.data);
         } catch (error) {
+            console.error(error);
             res.status(500).json({ message: "Error fetching data" });
         }
     } else {
-        res.status(405).end();
+        console.error(res);
+        // res.status(405).end();
     }
 }
