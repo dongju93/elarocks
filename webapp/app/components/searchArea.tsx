@@ -10,6 +10,14 @@ type DateTimeInputProps = {
     onChange: (newValue: Date) => void;
 };
 
+interface SearchAreaProps {
+    onSubmit: (options: {
+        selectedOption: string;
+        startTime: string;
+        endTime: string;
+    }) => void;
+}
+
 const DateTimeInput: React.FC<DateTimeInputProps> = ({
     id,
     label,
@@ -33,13 +41,10 @@ const DateTimeInput: React.FC<DateTimeInputProps> = ({
     </div>
 );
 
-const SearchArea: React.FC = () => {
-    // default search evens is process create
-    const [selectedOption, setSelectedOption] =
-        useState<string>("ProcessCreateEve");
-    // default search time range is day
-    const [startTime, setStartTime] = useState<Date>(subDays(new Date(), 1));
-    const [endTime, setEndTime] = useState<Date>(new Date());
+const SearchArea: React.FC<SearchAreaProps> = ({ onSubmit }) => {
+    const [selectedOption, setSelectedOption] = useState("ProcessCreateEve");
+    const [startTime, setStartTime] = useState(subDays(new Date(), 1));
+    const [endTime, setEndTime] = useState(new Date());
 
     const handleOptionChange = (
         event: React.ChangeEvent<HTMLSelectElement>
@@ -47,33 +52,13 @@ const SearchArea: React.FC = () => {
         setSelectedOption(event.target.value);
     };
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-
-        try {
-            const response = await fetch("/api/gql", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    selectedOption,
-                    startTime: format(startTime, "yyyy-MM-dd HH:mm:ss"),
-                    endTime: format(endTime, "yyyy-MM-dd HH:mm:ss"),
-                    perPage: 10,
-                }),
-            });
-            // console.log(response);
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            // console.log(data);
-        } catch (error) {
-            console.error("Failed to fetch data:", error);
-        }
+        onSubmit({
+            selectedOption,
+            startTime: format(startTime, "yyyy-MM-dd HH:mm:ss"),
+            endTime: format(endTime, "yyyy-MM-dd HH:mm:ss"),
+        });
     };
 
     return (

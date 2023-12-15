@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
-
 interface NetworkConnectionNode {
     agent_name: string;
     agent_id: string;
@@ -61,13 +60,14 @@ export default async function POST(
     res: NextApiResponse<GraphQLResponse | { message: string }>
 ) {
     if (req.method === "POST") {
-        console.log("Request body:", req.body);
-        const { startTime, endTime, perPage, before, selectedOption } = req.body;
+        // console.log("Request body:", req.body);
+        const { startTime, endTime, perPage, before, selectedOption } =
+            req.body;
 
         const graphqlQuery: GraphQLQuery = {
             query: `
-              query getRawEvents($start: String!, $end: String!, $last: Int, $rawEvents: String!) {
-                  $rawEvents(
+              query getRawEvents($start: String!, $end: String!, $last: Int, $before: String) {
+                NetworkConnectionEve(
                       filter: {
                           datetime: {
                               start: $start,
@@ -76,10 +76,12 @@ export default async function POST(
                       }
                       pagination: {
                           last: $last,
+                          before: $before
                       }
                   ) {
                       totalCount
                       pageInfo {
+                          startCursor
                           endCursor
                           hasNextPage
                           hasPreviousPage
@@ -115,36 +117,30 @@ export default async function POST(
                 start: startTime,
                 end: endTime,
                 last: perPage,
-                rawEvents: selectedOption
+                before: before,
             },
         };
-
-        const requestConfig = {
-            headers: { "Content-Type": "application/json" },
-            method: "POST",
-            body: graphqlQuery,
-        };
-
-        console.log("Request Method:", requestConfig.method);
-        console.log("Request Headers:", requestConfig.headers);
-        console.log("Request Body:", requestConfig.body);
+        console.log(graphqlQuery);
 
         try {
             const response = await axios.post(
                 "http://localhost:4000/",
-                graphqlQuery,
+                JSON.stringify(graphqlQuery),
                 {
-                    headers: requestConfig.headers,
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
                 }
             );
-
             res.status(200).json(response.data);
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ message: "Error fetching data" });
+            if (error instanceof Error) {
+                console.error(error.message);
+                res.status(500).json({ message: error.message });
+            } else {
+                console.error("An unknown error occurred");
+                res.status(500).json({ message: "An unknown error occurred" });
+            }
         }
-    } else {
-        console.error(res);
-        // res.status(405).end();
     }
 }

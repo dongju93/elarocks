@@ -62,6 +62,8 @@ async function fetchSysmonData(filter, nodeType, pagination) {
     const { first, last, before, after } = pagination;
     const postgresResults = await fetchDataBasedOnTime(nodeType, start, end);
 
+    console.log(nodeType, start)
+
     if (process_id) {
         filters.push((result) => result.process_id == process_id);
     }
