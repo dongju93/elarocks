@@ -80,6 +80,7 @@ const typeDefs = gql`
 
     # node with edges, pagination(cursor based)
     type PageInfo {
+        startCursor: String
         endCursor: String
         hasNextPage: Boolean!
         hasPreviousPage: Boolean!

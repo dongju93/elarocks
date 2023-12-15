@@ -37,7 +37,7 @@ const SearchArea: React.FC = () => {
     // default search evens is process create
     const [selectedOption, setSelectedOption] =
         useState<string>("ProcessCreateEve");
-    // default search timerange is day
+    // default search time range is day
     const [startTime, setStartTime] = useState<Date>(subDays(new Date(), 1));
     const [endTime, setEndTime] = useState<Date>(new Date());
 
@@ -60,16 +60,17 @@ const SearchArea: React.FC = () => {
                     selectedOption,
                     startTime: format(startTime, "yyyy-MM-dd HH:mm:ss"),
                     endTime: format(endTime, "yyyy-MM-dd HH:mm:ss"),
+                    perPage: 10,
                 }),
             });
-            console.log(response);
+            // console.log(response);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
 
             const data = await response.json();
-            console.log(data);
+            // console.log(data);
         } catch (error) {
             console.error("Failed to fetch data:", error);
         }

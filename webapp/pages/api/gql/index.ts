@@ -27,7 +27,7 @@ interface NetworkConnectionEdge {
     node: NetworkConnectionNode;
 }
 
-interface NetworkConnectionPageInfo {
+interface PageInfo {
     startCursor: string;
     endCursor: string;
     hasNextPage: boolean;
@@ -36,7 +36,7 @@ interface NetworkConnectionPageInfo {
 
 interface NetworkConnectionEve {
     totalCount: number;
-    pageInfo: NetworkConnectionPageInfo;
+    pageInfo: PageInfo;
     edges: NetworkConnectionEdge[];
 }
 
@@ -56,36 +56,18 @@ type GraphQLQuery = {
     };
 };
 
-// type ResponseData = {
-//     message: string;
-// };
-
-// export async function POST(
-//     req: NextApiRequest,
-//     res: NextApiResponse<ResponseData>
-// ) {
-//     // console.log('Request Object:', req);
-//     // console.log('Response Object:', res);
-//     if (req.method === "POST") {
-//         console.log(res)
-//         res.status(200).json({ message: "POST request received" });
-//     } else {
-//         res.status(405).json({ message: "Method Not Allowed" });
-//     }
-// }
-
 export default async function POST(
     req: NextApiRequest,
     res: NextApiResponse<GraphQLResponse | { message: string }>
 ) {
     if (req.method === "POST") {
         console.log("Request body:", req.body);
-        const { startTime, endTime, last, before, selectedOption } = req.body;
+        const { startTime, endTime, perPage, before, selectedOption } = req.body;
 
         const graphqlQuery: GraphQLQuery = {
             query: `
-              query GetNetworkConnectionEve($start: String!, $end: String!, $last: Int) {
-                  NetworkConnectionEve(
+              query getRawEvents($start: String!, $end: String!, $last: Int, $rawEvents: String!) {
+                  $rawEvents(
                       filter: {
                           datetime: {
                               start: $start,
@@ -132,7 +114,8 @@ export default async function POST(
             variables: {
                 start: startTime,
                 end: endTime,
-                last: 1,
+                last: perPage,
+                rawEvents: selectedOption
             },
         };
 

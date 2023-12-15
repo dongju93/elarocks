@@ -134,6 +134,7 @@ async function fetchSysmonData(filter, nodeType, pagination) {
     return {
         edges,
         pageInfo: {
+            startCursor: edges[0]?.cursor || null,
             endCursor: edges[edges.length - 1]?.cursor || null,
             hasNextPage,
             hasPreviousPage,
