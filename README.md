@@ -1,5 +1,4 @@
-Elasticsearch data to .csv file
-===
+# 1. Elasticsearch data to .csv file
 
 First, you need to collect [SYSMON](https://learn.microsoft.com/ko-kr/sysinternals/downloads/sysmon) data with [WINLOGBEAT](https://www.elastic.co/kr/beats/winlogbeat) and stored with [ELASTICSEARCH](https://www.elastic.co/kr/elasticsearch)   
 Second, this code will extract data to CSV files with delimiter "\t"
@@ -48,7 +47,7 @@ pub const SIZE: usize = QUERY SIZE;
 pub const SAVELOCATION: &str = "SAVE LOCATION";
 pub const CSVNAME: &str = "FILENAME WITH FILE EXTENSTION (extenstion is .csv)";
 ```
-4. Excute code
+4. Execute code
 ```
 cargo build
 cargo run --bin main
@@ -60,6 +59,55 @@ cargo run --bin main
 // When checking the message field type
 GET /.ds-winlogbeat-8.8.2-2023.08.06-000001/_mapping/field/message
 ```
-</br>
+</br></br>
+
+# 2. Data(.csv files) to RocksDB
+1. Place csv files location
+2. configure RocksDB location and execute code
+```
+cargo run --bin rocks
+```
+</br></br>
+
+# 3. Data view on GraphQL(raw query)
+1. change directory
+```
+cd graphql
+```
+2. Run graphQL server
+```
+npm run dev
+```
+3. Access apollo graphql server on 4000 port
+```
+http://localhost:4000
+```
+</br></br>
+
+# 4. Data view on web(GUI)
+1. change directory
+```
+cd webapp
+```
+2. Run node server
+```
+npm run dev
+```
+3. Access Next.js on 3000 port
+```
+http://localhost:3000
+```
+</br></br>
+
+# 99. Todo
+1. auto fetch elasticsearch data every one minute
+2. if elasticsearch data exceed max than fetch more
+3. auto import data to RocksDB right after csv parsing
+4. data fetch from web application implements with react-query
+5. cursor based pagination
+6. web application api optimize
+7. add union on graphql for multiple data types
+</br></br>
+
 
 #### Copyright 2023. ClumL Inc. all rights reserved 
