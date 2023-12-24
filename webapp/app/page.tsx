@@ -1,96 +1,99 @@
 "use client";
-import React, { useMemo, useState } from "react";
-import axios, { AxiosError } from "axios";
+import React, { useState } from "react";
+import axios from "axios";
+import {
+    useQuery,
+    QueryClient,
+    QueryClientProvider,
+    keepPreviousData,
+} from "@tanstack/react-query";
 import SearchArea from "./components/searchArea";
 import Pagination from "./components/pagination";
 
-export default function Home() {
-    const [searchResults, setSearchResults] = useState<any[]>([]);
-    const [totalCount, setTotalCount] = useState(0);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [startCursor, setStartCursor] = useState<string | null>(null);
-    const [endCursor, setEndCursor] = useState<string | null>(null);
-    const [searchParams, setSearchParams] = useState({
-        selectedOption: "",
-        startTime: "",
-        endTime: "",
+interface SearchParams {
+    selectedOption: string;
+    startTime: string;
+    endTime: string;
+    perPage: number;
+    before: string | null;
+}
+
+interface NetworkConnectionNode {
+    agent_name: string;
+    agent_id: string;
+    event_action: string;
+    utc_time: string;
+    process_guid: string;
+    process_id: number;
+    image: string;
+    user: string;
+    protocol: string;
+    initiated: boolean;
+    source_is_ipv6: boolean;
+    source_ip: string;
+    source_hostname: string;
+    source_port: number;
+    destination_is_ipv6: boolean;
+    destination_ip: string;
+    destination_hostname: string;
+    destination_port: number;
+    destination_port_name: string;
+}
+
+interface NetworkConnectionEdge {
+    cursor: string;
+    node: NetworkConnectionNode;
+}
+
+const fetchNetworkData = async (queryParams: SearchParams) => {
+    const response = await axios.post("/api/gql", queryParams);
+    return response.data.data;
+};
+
+function Home() {
+    const [searchParams, setSearchParams] = useState<SearchParams>({
+        selectedOption: "ProcessCreateEve",
+        startTime: new Date().toISOString(),
+        endTime: new Date().toISOString(),
+        perPage: 10,
+        before: null,
     });
-    const resultsPerPage = 10;
 
-    const sortedResults = useMemo(() => {
-        return searchResults.slice().sort((a, b) => {
-            const dateA = new Date(a.node.utc_time).getTime();
-            const dateB = new Date(b.node.utc_time).getTime();
-            return dateB - dateA;
-        });
-    }, [searchResults]);
+    // react-query main hook
+    const { data, isLoading, error, isPlaceholderData } = useQuery({
+        // key is core of react-hook
+        queryKey: ["networkData", searchParams],
+        // data fetch query
+        queryFn: () => fetchNetworkData(searchParams),
+        // STUDY!
+        placeholderData: keepPreviousData,
+    });
 
-    const handleSearch = async ({
+    const handleSearchSubmit = ({
         selectedOption,
         startTime,
         endTime,
-        cursor,
     }: {
         selectedOption: string;
         startTime: string;
         endTime: string;
-        cursor?: string | null;
     }) => {
-        setSearchParams({ selectedOption, startTime, endTime });
-
-        try {
-            const response = await axios.post("/api/gql", {
-                selectedOption,
-                startTime,
-                endTime,
-                before: cursor,
-                perPage: resultsPerPage,
-            });
-
-            setSearchResults(response.data.data.NetworkConnectionEve.edges);
-            setTotalCount(response.data.data.NetworkConnectionEve.totalCount);
-            setStartCursor(
-                response.data.data.NetworkConnectionEve.pageInfo.startCursor
-            );
-            setEndCursor(
-                response.data.data.NetworkConnectionEve.pageInfo.endCursor
-            );
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                console.error("Error response:", error.response);
-            } else {
-                console.error("Failed to fetch data:", error);
-            }
-        }
+        setSearchParams({
+            ...searchParams,
+            selectedOption,
+            startTime,
+            endTime,
+        });
     };
 
-    const handlePageChange = (newPage: number) => {
-        setCurrentPage(newPage);
-        let cursor = null;
-        if (newPage === 1) {
-            cursor = null;
-        } else if (newPage == currentPage + 1) {
-            cursor = startCursor;
-        } else if (newPage == currentPage - 1) {
-            cursor = endCursor;
-        }
-
-        handleSearch({ ...searchParams, cursor });
-    };
+    if (isLoading) return <div>Loading...</div>;
+    if (error) return <div>An error occurred: {error.message}</div>;
 
     return (
         <div>
-            <SearchArea onSubmit={handleSearch} />
-            <div className="my-4 text-center dark:text-gray-300">
-                Total Results: {totalCount}
-            </div>
-            <Pagination
-                currentPage={currentPage}
-                totalPages={Math.ceil(totalCount / resultsPerPage)}
-                onPageChange={handlePageChange}
-            />
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+            <SearchArea onSubmit={handleSearchSubmit} />
+            <table>
+                <thead>
                     <tr>
                         <th>Agent Name</th>
                         <th>Agent ID</th>
@@ -113,13 +116,10 @@ export default function Home() {
                         <th>Destination Port Name</th>
                     </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                    {sortedResults.length > 0 ? (
-                        sortedResults.map((edge) => (
-                            <tr
-                                key={edge.cursor}
-                                className="dark:text-gray-300"
-                            >
+                <tbody>
+                    {data?.NetworkConnectionEve?.edges.map(
+                        (edge: NetworkConnectionEdge) => (
+                            <tr key={edge.cursor}>
                                 <td>{edge.node.agent_name}</td>
                                 <td>{edge.node.agent_id}</td>
                                 <td>{edge.node.event_action}</td>
@@ -129,32 +129,31 @@ export default function Home() {
                                 <td>{edge.node.image}</td>
                                 <td>{edge.node.user}</td>
                                 <td>{edge.node.protocol}</td>
-                                <td>{edge.node.initiated.toString()}</td>
-                                <td>{edge.node.source_is_ipv6.toString()}</td>
+                                <td>{String(edge.node.initiated)}</td>
+                                <td>{String(edge.node.source_is_ipv6)}</td>
                                 <td>{edge.node.source_ip}</td>
                                 <td>{edge.node.source_hostname}</td>
                                 <td>{edge.node.source_port}</td>
-                                <td>
-                                    {edge.node.destination_is_ipv6.toString()}
-                                </td>
+                                <td>{String(edge.node.destination_is_ipv6)}</td>
                                 <td>{edge.node.destination_ip}</td>
                                 <td>{edge.node.destination_hostname}</td>
                                 <td>{edge.node.destination_port}</td>
                                 <td>{edge.node.destination_port_name}</td>
                             </tr>
-                        ))
-                    ) : (
-                        <tr>
-                            <td
-                                colSpan={19}
-                                className="text-center py-4 dark:text-gray-300"
-                            >
-                                No results found
-                            </td>
-                        </tr>
+                        )
                     )}
                 </tbody>
             </table>
         </div>
+    );
+}
+
+const queryClient = new QueryClient();
+
+export default function HomePage() {
+    return (
+        <QueryClientProvider client={queryClient}>
+            <Home />
+        </QueryClientProvider>
     );
 }

@@ -11,6 +11,7 @@ Cargo.lock
 # DB
 /file
 /db
+/nano_db
 
 # GraphQL, Webapp
 */**/node_modules

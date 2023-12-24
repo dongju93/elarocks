@@ -1,9 +1,56 @@
-const { fetchKey } = require("../db");
-const { fetchDataBasedOnTime } = require("../fetchData");
-// for login function not yet implements
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+const { execFile } = require("child_process");
+const fs = require("fs");
+const path = require("path");
 
+// Executes the Rust binary and returns the parsed data
+async function executeRustBinary(
+    startKey,
+    endKey,
+    searchDirection,
+    maxReturns,
+    cursorValue,
+    imageContains,
+    pidMatch
+) {
+    return new Promise((resolve, reject) => {
+        const filePath = path.join(__dirname, "nano-select");
+
+        console.log("Executing:", filePath);
+
+        const args = [
+            startKey,
+            endKey,
+            searchDirection,
+            maxReturns,
+            cursorValue,
+            imageContains,
+            pidMatch,
+        ];
+
+        execFile(
+            filePath, // Use the filePath variable here
+            args,
+            (error, stdout, stderr) => {
+                if (error) {
+                    console.error("Command Error:", error);
+                    console.error("Standard Error Output:", stderr);
+                    reject(error);
+                    return;
+                }
+
+                try {
+                    const lines = stdout.trim().split("\n");
+                    const data = lines.map((line) => JSON.parse(line));
+                    resolve(data);
+                } catch (parseError) {
+                    reject(parseError);
+                }
+            }
+        );
+    });
+}
+
+// GraphQL resolvers
 const resolvers = {
     Query: {
         RegValueSetEve: async (
@@ -37,112 +84,69 @@ const resolvers = {
     },
 };
 
-function datetimeToEpoch(datetime) {
-    const [datePart, timePart] = datetime.split(" ");
-    const [year, month, day] = datePart.split("-").map(Number);
-    const [hour, minute, fullSecond] = timePart.split(":");
-    const second = parseInt(fullSecond, 10);
-    const fractionalSecond = parseFloat(fullSecond) - second;
-    const nanoseconds = Math.round(fractionalSecond * 1e9);
+// Fetches Sysmon data using the Rust binary
+async function fetchSysmonData(filter, eventType, pagination) {
+    start_time = filter.datetime.start.replace("T", " ").replace("Z", "00000");
+    end_time = filter.datetime.end.replace("T", " ").replace("Z", "99999");
 
-    const dateObj = new Date(
-        Date.UTC(year, month - 1, day, hour, minute, second)
-    );
-    const epochSeconds = Math.floor(dateObj.getTime() / 1000);
+    const startKey = `${eventType}_${start_time}`;
+    const endKey = `${eventType}_${end_time}`;
+    // Determine the search direction based on whether 'after' or 'before' is provided
+    let searchDirection = "first"; // Default search direction
+    if (pagination.first) {
+        searchDirection = "first";
+    } else if (pagination.last) {
+        searchDirection = "last";
+    }
 
-    return `${epochSeconds}${String(nanoseconds).padStart(9, "0")}`;
+    // // Determine the number of results to return
+    let maxReturns = pagination.first || 10; // Default to 10 if 'first' is not provided
+    if (pagination.last && !pagination.first) {
+        maxReturns = pagination.last;
+    }
+
+    let imageContains = filter.image || "";
+    let pidMatch = filter.process_id;
+
+    // Cursor value based on 'after' or 'before'
+    const cursorValue = pagination.after || pagination.before || "";
+
+    try {
+        const rawData = await executeRustBinary(
+            startKey,
+            endKey,
+            searchDirection,
+            maxReturns,
+            cursorValue,
+            imageContains,
+            pidMatch
+        );
+
+        // Assuming rawData is an array with the last element being the pagination data
+        const data = rawData[0];
+        const pageInfoData = data[data.length - 1]; // Pagination info
+
+        // Extract the edges (all elements except the last one)
+        const edges = data.slice(0, -1).map((item) => ({
+            cursor: item.cursor,
+            node: item.node,
+        }));
+
+        const pageInfo = {
+            startCursor: pageInfoData.start_cursor,
+            endCursor: pageInfoData.end_cursor,
+            hasNextPage: pageInfoData.has_next_page,
+            hasPreviousPage: pageInfoData.has_previous_page,
+        };
+
+        return {
+            edges: edges,
+            pageInfo: pageInfo,
+            totalCount: pageInfoData.total_count,
+        };
+    } catch (error) {
+        throw new Error(error);
+    }
 }
 
-async function fetchSysmonData(filter, nodeType, pagination) {
-    const { datetime, process_id, user, agent_id } = filter;
-    const { start, end } = datetime;
-    const DEFAULT_LIMIT = 50;
-    const filters = [];
-    const allResults = [];
-    const { first, last, before, after } = pagination;
-    const postgresResults = await fetchDataBasedOnTime(nodeType, start, end);
-
-    console.log(nodeType, start)
-
-    if (process_id) {
-        filters.push((result) => result.process_id == process_id);
-    }
-
-    if (user) {
-        filters.push((result) => result.user == user);
-    }
-
-    if (agent_id) {
-        filters.push(
-            (result) => result.agent_id && result.agent_id.includes(agent_id)
-        );
-    }
-
-    for (const row of postgresResults) {
-        const key = `${nodeType}_${row.savedtime}`;
-        const result = await fetchKey(key);
-        // use every method to check filters is true
-        if (result) {
-            if (result.hashes) {
-                result.hashes = result.hashes.split(",");
-            }
-            // for cursor epoch
-            const epochSavedTime = datetimeToEpoch(row.savedtime);
-            if (filters.every((filterFn) => filterFn(result))) {
-                allResults.push({ ...result, savedtimeEpoch: epochSavedTime });
-            } else {
-                allResults.push();
-            }
-        }
-    }
-
-    // Sort results by utc_time
-    allResults.sort((a, b) => new Date(a.utc_time) - new Date(b.utc_time));
-
-    // before and after arguments
-    let startIndex = 0;
-    if (after) {
-        startIndex =
-            allResults.findIndex((item) => item.savedtimeEpoch === after) + 1;
-    }
-
-    let endIndex = allResults.length;
-    if (before) {
-        endIndex = allResults.findIndex(
-            (item) => item.savedtimeEpoch === before
-        );
-    }
-
-    // first and last arguments
-    if (typeof first === "number") {
-        results = allResults.slice(startIndex, startIndex + first);
-    } else if (typeof last === "number") {
-        startIndex = endIndex - last > 0 ? endIndex - last : 0;
-        results = allResults.slice(startIndex, endIndex);
-    } else {
-        results = allResults.slice(startIndex, startIndex + DEFAULT_LIMIT);
-    }
-
-    const edges = results.map((item) => ({
-        cursor: item.savedtimeEpoch,
-        node: item,
-    }));
-
-    const hasNextPage = before
-        ? true
-        : (after ? startIndex + first : first) < allResults.length;
-    const hasPreviousPage = before ? endIndex - last > 0 : startIndex > 0;
-
-    return {
-        edges,
-        pageInfo: {
-            startCursor: edges[0]?.cursor || null,
-            endCursor: edges[edges.length - 1]?.cursor || null,
-            hasNextPage,
-            hasPreviousPage,
-        },
-        totalCount: allResults.length,
-    };
-}
-
-module.exports = resolvers;
+module.exports = { resolvers };

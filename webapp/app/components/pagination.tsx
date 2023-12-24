@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 
 interface PaginationProps {
     currentPage: number;
@@ -11,28 +11,39 @@ const Pagination: React.FC<PaginationProps> = ({
     totalPages,
     onPageChange,
 }) => {
-    const pageNumbers: any[] = [];
+    const PAGE_DISPLAY_LIMIT = 5; // Number of pages to display around the current page
+    const START_ELLIPSIS_THRESHOLD = 6; // When to start showing ellipsis after the first page
 
-    pageNumbers.push(1);
+    const pageNumbers = useMemo(() => {
+        let pages: (number | string)[] = [];
+        pages.push(1);
 
-    let startPage = Math.max(2, currentPage - 2);
-    let endPage = Math.min(totalPages - 1, currentPage + 2);
+        let startPage = Math.max(2, currentPage - PAGE_DISPLAY_LIMIT);
+        let endPage = Math.min(
+            totalPages - 1,
+            currentPage + PAGE_DISPLAY_LIMIT
+        );
 
-    if (currentPage < 5) {
-        endPage = Math.min(6, totalPages - 1);
-    }
-    if (totalPages - currentPage < 5) {
-        startPage = Math.max(totalPages - 5, 2);
-    }
+        if (currentPage < START_ELLIPSIS_THRESHOLD) {
+            endPage = Math.min(START_ELLIPSIS_THRESHOLD, totalPages - 1);
+        }
+        if (totalPages - currentPage < START_ELLIPSIS_THRESHOLD) {
+            startPage = Math.max(totalPages - START_ELLIPSIS_THRESHOLD, 2);
+        }
 
-    for (let i = startPage; i <= endPage; i++) {
-        pageNumbers.push(i);
-    }
+        for (let i = startPage; i <= endPage; i++) {
+            pages.push(i);
+        }
 
-    if (!pageNumbers.includes(totalPages)) {
-        pageNumbers.push("...");
-        pageNumbers.push(totalPages);
-    }
+        if (endPage < totalPages - 1) {
+            pages.push("...");
+        }
+        if (!pages.includes(totalPages)) {
+            pages.push(totalPages);
+        }
+        return pages;
+    }, [currentPage, totalPages]);
+
     const handleClick = (page: string | number) => {
         if (page === "...") return;
         onPageChange(Number(page));
@@ -50,6 +61,7 @@ const Pagination: React.FC<PaginationProps> = ({
                             ? "bg-blue-500 text-white"
                             : "bg-white dark:bg-gray-700 dark:text-gray-300"
                     }`}
+                    aria-label={`Page ${page}`}
                 >
                     {page}
                 </button>

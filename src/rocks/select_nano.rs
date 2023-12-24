@@ -82,6 +82,14 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let key_str = String::from_utf8_lossy(&key).to_string();
                 let json: serde_json::Value = serde_json::from_str(&value_str)?;
 
+                if !is_reverse_search && key.as_ref() > end_key.as_slice() {
+                    break;
+                }
+
+                if is_reverse_search && key.as_ref() < start_key.as_slice() {
+                    break;
+                }
+
                 if apply_filters(&json, &image_contains, &process_id_exact) {
                     total_count += 1;
 
@@ -131,8 +139,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                             let value_str = String::from_utf8_lossy(&value).to_string();
                             let json: serde_json::Value = serde_json::from_str(&value_str)?;
 
-                            if key.as_ref() > cursor_key_bytes
-                                && apply_filters(&json, &image_contains, &process_id_exact)
+                            if apply_filters(&json, &image_contains, &process_id_exact)
+                                && key.as_ref() > cursor_key_bytes
+                                && key.as_ref() != end_key.as_slice()
                             {
                                 has_previous_page = true;
                                 break; // Break on finding the first key greater than the cursor
@@ -153,8 +162,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                             let value_str = String::from_utf8_lossy(&value).to_string();
                             let json: serde_json::Value = serde_json::from_str(&value_str)?;
 
-                            if key.as_ref() < cursor_key_bytes
-                                && apply_filters(&json, &image_contains, &process_id_exact)
+                            if apply_filters(&json, &image_contains, &process_id_exact)
+                                && key.as_ref() < cursor_key_bytes
+                                && key.as_ref() != start_key.as_slice()
                             {
                                 has_previous_page = true;
                                 break; // Break on finding the first key less than the cursor
@@ -178,8 +188,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                     let value_str = String::from_utf8_lossy(&value).to_string();
                     let json: serde_json::Value = serde_json::from_str(&value_str)?;
 
-                    if key.as_ref() > start_key.as_slice()
-                        && apply_filters(&json, &image_contains, &process_id_exact)
+                    if apply_filters(&json, &image_contains, &process_id_exact)
+                        && key.as_ref() > start_key.as_slice()
+                        && key.as_ref() != end_cursor_bytes
                     {
                         has_next_page = true;
                         break; // Break on finding the first key greater than the cursor
@@ -198,8 +209,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                     let value_str = String::from_utf8_lossy(&value).to_string();
                     let json: serde_json::Value = serde_json::from_str(&value_str)?;
 
-                    if key.as_ref() < end_key.as_slice()
-                        && apply_filters(&json, &image_contains, &process_id_exact)
+                    if apply_filters(&json, &image_contains, &process_id_exact)
+                        && key.as_ref() < end_key.as_slice()
+                        && key.as_ref() != end_cursor_bytes
                     {
                         has_next_page = true;
                         break; // Break on finding the first key less than the cursor

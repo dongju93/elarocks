@@ -1,33 +1,13 @@
 const { ApolloServer } = require("apollo-server");
-const typeDefs = require("./schema/typeDefs");
-const resolvers = require("./schema/resolvers");
-const { db, fetchKey } = require("./db");
-const { fetchDataBasedOnTime } = require("./fetchData");
+const typeDefs = require("./schema/typeDefs"); // Adjust the path as necessary
+const { resolvers } = require("./schema/resolvers"); // Adjust the path as necessary
 
-// rocksdb open
-db.open((err) => {
-    if (err) throw err;
-
-    const server = new ApolloServer({
-        typeDefs,
-        resolvers,
-    });
+try {
+    const server = new ApolloServer({ typeDefs, resolvers });
 
     server.listen().then(({ url }) => {
         console.log(`🚀 Server ready at ${url}`);
     });
-});
-
-process.on("SIGINT", gracefulShutdown);
-process.on("SIGTERM", gracefulShutdown);
-
-function gracefulShutdown() {
-    db.close((err) => {
-        if (err) {
-            console.error("Error closing RocksDB:", err);
-        } else {
-            console.log("RocksDB closed successfully.");
-        }
-        process.exit();
-    });
+} catch (error) {
+    console.error("Error initializing Apollo Server:", error.message);
 }

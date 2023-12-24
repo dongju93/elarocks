@@ -152,12 +152,16 @@ fn main() -> Result<(), Box<dyn Error>> {
                     &db,
                     start_key,
                     first_key.as_deref().unwrap_or(start_key),
+                    image_contain,
+                    pid_match,
                     Direction::Forward,
                 ),
                 Direction::Reverse => has_more_records(
                     &db,
                     end_key,
                     first_key.as_deref().unwrap_or(end_key),
+                    image_contain,
+                    pid_match,
                     Direction::Reverse,
                 ),
             }
@@ -166,12 +170,22 @@ fn main() -> Result<(), Box<dyn Error>> {
         };
 
         has_next_page = match direction {
-            Direction::Forward => {
-                has_more_records(&db, last_key.as_ref(), end_key, Direction::Forward)
-            }
-            Direction::Reverse => {
-                has_more_records(&db, last_key.as_ref(), start_key, Direction::Reverse)
-            }
+            Direction::Forward => has_more_records(
+                &db,
+                last_key.as_ref(),
+                end_key,
+                image_contain,
+                pid_match,
+                Direction::Forward,
+            ),
+            Direction::Reverse => has_more_records(
+                &db,
+                last_key.as_ref(),
+                start_key,
+                image_contain,
+                pid_match,
+                Direction::Reverse,
+            ),
         };
     }
 
@@ -197,19 +211,54 @@ fn key_to_epoch(key: &str) -> Result<i64, Box<dyn Error>> {
     }
 }
 
-fn has_more_records(db: &DB, key: &[u8], boundary_key: &[u8], direction: Direction) -> bool {
+fn has_more_records(
+    db: &DB,
+    key: &[u8],
+    boundary_key: &[u8],
+    image_contain: Option<&str>,
+    pid_match: Option<u32>,
+    direction: Direction,
+) -> bool {
     let iter_mode = IteratorMode::From(key, direction);
     let mut iter = db.iterator(iter_mode);
-    // println!("{:?}", boundary_key);
 
-    match iter.next() {
-        Some(Ok((k, _))) => {
-            let k_slice = k.as_ref(); // Convert Box<[u8]> to &[u8]
-            match direction {
-                Direction::Forward => k_slice < boundary_key,
-                Direction::Reverse => k_slice > boundary_key,
-            }
+    while let Some(Ok((k, value))) = iter.next() {
+        let k_slice = k.as_ref(); // Convert Box<[u8]> to &[u8]
+        let within_bounds = match direction {
+            Direction::Forward => k_slice >= key && k_slice < boundary_key,
+            Direction::Reverse => k_slice <= key && k_slice > boundary_key,
+        };
+
+        if !within_bounds {
+            break;
         }
-        _ => false,
+
+        let value_str = match String::from_utf8(value.to_vec()) {
+            Ok(val) => val,
+            Err(_) => continue,
+        };
+
+        let json: Map<String, Value> = match serde_json::from_str(&value_str) {
+            Ok(json) => json,
+            Err(_) => continue,
+        };
+
+        let image_match = image_contain.map_or(true, |img| {
+            json.get("image")
+                .and_then(|v| v.as_str())
+                .map_or(false, |image| image.contains(img))
+        });
+
+        let pid_match_condition = pid_match.map_or(true, |pid| {
+            json.get("process_id")
+                .and_then(|v| v.as_u64())
+                .map_or(false, |id| id as u32 == pid)
+        });
+
+        if image_match && pid_match_condition {
+            return true;
+        }
     }
+
+    false
 }

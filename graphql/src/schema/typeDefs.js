@@ -74,8 +74,9 @@ const typeDefs = gql`
     input SysmonFilter {
         datetime: DateTimeRange!
         process_id: Int
-        user: String
-        agent_id: String
+        # user: String
+        # agent_id: String
+        image: String
     }
 
     # node with edges, pagination(cursor based)
