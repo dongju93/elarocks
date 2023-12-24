@@ -107,6 +107,7 @@ http://localhost:3000
 5. cursor based pagination
 6. web application api optimize
 7. add union on graphql for multiple data types
+8. fetch data from RocksDB using iteration (detach PostgreSQL) - speed test required - ✅
 </br></br>
 
 

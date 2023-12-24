@@ -33,6 +33,10 @@ name = "rocks"
 path = "src/rocks/rocks.rs"
 
 [[bin]]
+name = "nano-select"
+path = "src/rocks/select_nano.rs"
+
+[[bin]]
 name = "select"
 path = "src/rocks/select.rs"
 

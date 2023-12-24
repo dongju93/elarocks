@@ -10,7 +10,8 @@ use serde_json::to_vec;
 use std::error::Error;
 use std::net::{IpAddr, Ipv4Addr};
 use std::ptr::null;
-use tokio_postgres::{Client, NoTls};
+// use tokio_postgres::{Client, NoTls};
+use std::env;
 #[path = "../structs/mod.rs"]
 mod structs;
 use structs::eventTypes::*;
@@ -21,7 +22,7 @@ use envs::db::*;
 struct CsvConfig {
     csv_path: String,
     event_type: EventType,
-    query: &'static str,
+    // query: &'static str,
 }
 
 #[allow(dead_code)]
@@ -29,29 +30,6 @@ enum EventType {
     ProcessCreate,
     RegistryValueSet,
     NetworkConnection,
-}
-
-async fn save_keys_to_postgres(
-    keys_to_save: &Vec<String>,
-    query: &'static str,
-) -> Result<(), Box<dyn Error>> {
-    let (client, connection) = tokio_postgres::connect(DBCONN, NoTls).await?;
-
-    tokio::spawn(async move {
-        if let Err(e) = connection.await {
-            eprintln!("connection error: {}", e);
-        }
-    });
-
-    client.batch_execute("BEGIN").await?;
-    for ktime in keys_to_save.iter() {
-        let parts: Vec<&str> = ktime.split('_').collect();
-        let datetime_str = parts.get(1).unwrap_or(&"");
-        client.execute(query, &[&datetime_str]).await?;
-    }
-    client.batch_execute("COMMIT").await?;
-
-    Ok(())
 }
 
 fn process_record(
@@ -203,64 +181,83 @@ fn process_csv(config: &CsvConfig) -> Result<(), Box<dyn Error>> {
     let transaction = db.transaction();
 
     let mut counter: u32 = 0;
-    let mut previous_utc_time = String::new();
-    let mut keys_to_save = Vec::new();
+    let mut previous_naive_dt =
+        NaiveDateTime::from_timestamp_opt(0, 0).expect("Initial timestamp should be valid");
 
     for result in rdr.records() {
         let record = result?;
         let serialized_value = process_record(&record, &config.event_type)?;
-        let naive_dt = NaiveDateTime::parse_from_str(
+        let naive_dt = match NaiveDateTime::parse_from_str(
             record.get(3).unwrap_or_default(),
             "%Y-%m-%d %H:%M:%S%.3f",
-        )?;
-        let utc_time = Utc.from_utc_datetime(&naive_dt);
+        ) {
+            Ok(dt) => dt,
+            Err(e) => {
+                eprintln!("Error parsing datetime: {}", e);
+                continue; // Skip this record or handle as needed
+            }
+        };
 
-        if previous_utc_time != utc_time.to_string() {
+        if naive_dt == previous_naive_dt {
+            counter += 1;
+        } else {
             counter = 0;
-            previous_utc_time = utc_time.to_string();
+            previous_naive_dt = naive_dt;
         }
 
-        let formatted_time = utc_time.format("%Y-%m-%d %H:%M:%S%.3f").to_string();
-        let key = format!(
-            "{}_{}{}",
-            record.get(2).unwrap_or_default(),
-            formatted_time,
-            format!("{:05}", counter)
-        );
+        let additional_nanos = counter % 1_000_000; // to keep it within nanosecond range
+        let adjusted_naive_dt = naive_dt
+            .checked_add_signed(chrono::Duration::nanoseconds(additional_nanos as i64))
+            .expect("Adjusted time should be valid");
 
-        keys_to_save.push(key.clone());
-        counter += 1;
+        let utc_time = Utc.from_utc_datetime(&adjusted_naive_dt);
+        let epoch_time_nanos = match utc_time.timestamp_nanos_opt() {
+            Some(nanos) => nanos,
+            None => {
+                eprintln!("Warning: Timestamp is out of range for nanosecond precision.");
+                continue; // Skip this record or handle as needed
+            }
+        };
+
+        let key = format!("{}_{}", record.get(2).unwrap_or_default(), epoch_time_nanos);
+
+        println!("{}", key);
+
         transaction.put(key.as_bytes(), &serialized_value)?;
     }
 
-    tokio::runtime::Runtime::new()?.block_on(save_keys_to_postgres(&keys_to_save, config.query))?;
     transaction.commit()?;
 
     Ok(())
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let configs = vec![
-        CsvConfig {
-            csv_path: format!("{}{}", CSV_LOCA, "event13_logs.csv"),
-            event_type: EventType::RegistryValueSet,
-            query: DBINSE_REG,
-        },
-        // CsvConfig {
-        //     csv_path: format!("{}{}", CSV_LOCA, "event1_logs.csv"),
-        //     event_type: EventType::ProcessCreate,
-        //     query: DBINSE_PRO,
-        // },
-        // CsvConfig {
-        //     csv_path: format!("{}{}", CSV_LOCA, "event3_logs.csv"),
-        //     event_type: EventType::NetworkConnection,
-        //     query: DBINSE_NET,
-        // },
-    ];
+    let args: Vec<String> = env::args().collect();
 
-    for config in &configs {
-        process_csv(config)?;
+    if args.len() < 2 {
+        eprintln!("Usage: {} [Event Type Number]", args[0]);
+        return Ok(());
     }
+
+    let event_type_number = &args[1];
+    let event_type = match event_type_number.as_str() {
+        "1" => EventType::ProcessCreate,
+        "3" => EventType::NetworkConnection,
+        "13" => EventType::RegistryValueSet,
+        _ => {
+            eprintln!("Invalid event type number: {}", event_type_number);
+            return Ok(());
+        }
+    };
+
+    let csv_path = format!("{}event{}_logs.csv", CSV_LOCA, event_type_number);
+
+    let config = CsvConfig {
+        csv_path,
+        event_type,
+    };
+
+    process_csv(&config)?;
 
     Ok(())
 }
