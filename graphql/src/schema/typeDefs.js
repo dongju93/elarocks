@@ -125,6 +125,7 @@ const typeDefs = gql`
         last: Int
         before: String
         after: String
+        offset: Int
     }
 
     type Query {

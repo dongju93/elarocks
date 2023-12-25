@@ -1,59 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
-interface NetworkConnectionNode {
-    agent_name: string;
-    agent_id: string;
-    event_action: string;
-    utc_time: string;
-    process_guid: string;
-    process_id: number;
-    image: string;
-    user: string;
-    protocol: string;
-    initiated: boolean;
-    source_is_ipv6: boolean;
-    source_ip: string;
-    source_hostname: string;
-    source_port: number;
-    destination_is_ipv6: boolean;
-    destination_ip: string;
-    destination_hostname: string;
-    destination_port: number;
-    destination_port_name: string;
-}
-
-interface NetworkConnectionEdge {
-    node: NetworkConnectionNode;
-}
-
-interface PageInfo {
-    startCursor: string;
-    endCursor: string;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-}
-
-interface NetworkConnectionEve {
-    totalCount: number;
-    pageInfo: PageInfo;
-    edges: NetworkConnectionEdge[];
-}
-
-interface GraphQLData {
-    NetworkConnectionEve: NetworkConnectionEve;
-}
-
-interface GraphQLResponse {
-    data: GraphQLData;
-    errors?: any[];
-}
-
-type GraphQLQuery = {
-    query: string;
-    variables: {
-        [key: string]: any;
-    };
-};
+import {
+    // NetworkConnectionNode,
+    // NetworkConnectionEdge,
+    // PageInfo,
+    // NetworkConnectionEve,
+    // GraphQLData,
+    GraphQLResponse,
+    GraphQLQuery,
+} from "../../../app/components/types";
 
 export default async function POST(
     req: NextApiRequest,
@@ -61,12 +16,13 @@ export default async function POST(
 ) {
     if (req.method === "POST") {
         // console.log("Request body:", req.body);
-        const { startTime, endTime, perPage, before, selectedOption } =
+        // cursor is handle with api, front-end just only pass offset
+        const { startTime, endTime, perPage, cursor, offset, selectedOption } =
             req.body;
 
         const graphqlQuery: GraphQLQuery = {
             query: `
-              query getRawEvents($start: String!, $end: String!, $last: Int, $before: String) {
+              query getRawEvents($start: String!, $end: String!, $last: Int, $offset: Int) {
                 NetworkConnectionEve(
                       filter: {
                           datetime: {
@@ -76,7 +32,7 @@ export default async function POST(
                       }
                       pagination: {
                           last: $last,
-                          before: $before
+                          offset: $offset
                       }
                   ) {
                       totalCount
@@ -117,7 +73,7 @@ export default async function POST(
                 start: startTime,
                 end: endTime,
                 last: perPage,
-                before: before,
+                offset: offset,
             },
         };
         console.log(graphqlQuery);

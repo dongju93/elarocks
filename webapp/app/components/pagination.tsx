@@ -1,71 +1,109 @@
-import React, { useMemo } from "react";
-
-interface PaginationProps {
-    currentPage: number;
-    totalPages: number;
-    onPageChange: (page: number) => void;
-}
+import React, { useState } from "react";
+import { PaginationProps } from "../components/types";
 
 const Pagination: React.FC<PaginationProps> = ({
+    totalCount,
+    itemsPerPage,
     currentPage,
-    totalPages,
     onPageChange,
 }) => {
-    const PAGE_DISPLAY_LIMIT = 5; // Number of pages to display around the current page
-    const START_ELLIPSIS_THRESHOLD = 6; // When to start showing ellipsis after the first page
+    const totalPages = Math.ceil(totalCount / itemsPerPage);
+    const [pageRange, setPageRange] = useState({ start: 1, end: 5 });
 
-    const pageNumbers = useMemo(() => {
-        let pages: (number | string)[] = [];
-        pages.push(1);
+    const updatePageRange = (page: number) => {
+        let newStart = Math.max(page - 2, 1);
+        let newEnd = newStart + 4;
 
-        let startPage = Math.max(2, currentPage - PAGE_DISPLAY_LIMIT);
-        let endPage = Math.min(
-            totalPages - 1,
-            currentPage + PAGE_DISPLAY_LIMIT
-        );
-
-        if (currentPage < START_ELLIPSIS_THRESHOLD) {
-            endPage = Math.min(START_ELLIPSIS_THRESHOLD, totalPages - 1);
-        }
-        if (totalPages - currentPage < START_ELLIPSIS_THRESHOLD) {
-            startPage = Math.max(totalPages - START_ELLIPSIS_THRESHOLD, 2);
+        if (newEnd > totalPages) {
+            newEnd = totalPages;
+            newStart = Math.max(totalPages - 4, 1);
         }
 
-        for (let i = startPage; i <= endPage; i++) {
-            pages.push(i);
+        setPageRange({ start: newStart, end: newEnd });
+        onPageChange(page);
+    };
+
+    const renderPageNumbers = () => {
+        let pages = [];
+
+        if (pageRange.start > 1) {
+            pages.push(
+                <button
+                    key={1}
+                    onClick={() => updatePageRange(1)}
+                    className="px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
+                >
+                    1
+                </button>,
+                <span
+                    key="ellipsis1"
+                    onClick={() => updatePageRange(pageRange.start - 1)}
+                    className="px-4 py-2 text-gray-700 cursor-pointer"
+                >
+                    ...
+                </span>
+            );
         }
 
-        if (endPage < totalPages - 1) {
-            pages.push("...");
+        for (
+            let i = pageRange.start;
+            i <= Math.min(pageRange.end, totalPages);
+            i++
+        ) {
+            pages.push(
+                <button
+                    key={i}
+                    onClick={() => updatePageRange(i)}
+                    className={`px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 ${
+                        currentPage === i ? "bg-gray-200" : ""
+                    }`}
+                >
+                    {i}
+                </button>
+            );
         }
-        if (!pages.includes(totalPages)) {
-            pages.push(totalPages);
+
+        if (pageRange.end < totalPages) {
+            pages.push(
+                <span
+                    key="ellipsis2"
+                    onClick={() => updatePageRange(pageRange.end + 1)}
+                    className="px-4 py-2 text-gray-700 cursor-pointer"
+                >
+                    ...
+                </span>,
+                <button
+                    key={totalPages}
+                    onClick={() => updatePageRange(totalPages)}
+                    className="px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
+                >
+                    {totalPages}
+                </button>
+            );
         }
+
         return pages;
-    }, [currentPage, totalPages]);
-
-    const handleClick = (page: string | number) => {
-        if (page === "...") return;
-        onPageChange(Number(page));
     };
 
     return (
-        <div className="flex justify-center my-4">
-            {pageNumbers.map((page, index) => (
+        <div className="flex items-center justify-center space-x-1">
+            {currentPage > 1 && (
                 <button
-                    key={index}
-                    onClick={() => handleClick(page)}
-                    disabled={page === "..."}
-                    className={`mx-1 px-4 py-2 rounded ${
-                        currentPage === page
-                            ? "bg-blue-500 text-white"
-                            : "bg-white dark:bg-gray-700 dark:text-gray-300"
-                    }`}
-                    aria-label={`Page ${page}`}
+                    onClick={() => updatePageRange(currentPage - 1)}
+                    className="px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
                 >
-                    {page}
+                    Previous
                 </button>
-            ))}
+            )}
+            {renderPageNumbers()}
+            {currentPage < totalPages && (
+                <button
+                    onClick={() => updatePageRange(currentPage + 1)}
+                    className="px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
+                >
+                    Next
+                </button>
+            )}
         </div>
     );
 };

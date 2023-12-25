@@ -27,26 +27,22 @@ async function executeRustBinary(
             pidMatch,
         ];
 
-        execFile(
-            filePath, // Use the filePath variable here
-            args,
-            (error, stdout, stderr) => {
-                if (error) {
-                    console.error("Command Error:", error);
-                    console.error("Standard Error Output:", stderr);
-                    reject(error);
-                    return;
-                }
-
-                try {
-                    const lines = stdout.trim().split("\n");
-                    const data = lines.map((line) => JSON.parse(line));
-                    resolve(data);
-                } catch (parseError) {
-                    reject(parseError);
-                }
+        execFile(filePath, args, (error, stdout, stderr) => {
+            if (error) {
+                console.error("Command Error:", error);
+                console.error("Standard Error Output:", stderr);
+                reject(error);
+                return;
             }
-        );
+
+            try {
+                const lines = stdout.trim().split("\n");
+                const data = lines.map((line) => JSON.parse(line));
+                resolve(data);
+            } catch (parseError) {
+                reject(parseError);
+            }
+        });
     });
 }
 
@@ -91,16 +87,15 @@ async function fetchSysmonData(filter, eventType, pagination) {
 
     const startKey = `${eventType}_${start_time}`;
     const endKey = `${eventType}_${end_time}`;
-    // Determine the search direction based on whether 'after' or 'before' is provided
-    let searchDirection = "first"; // Default search direction
+    // first or last set to forward or reverse search
+    let searchDirection = "first";
     if (pagination.first) {
         searchDirection = "first";
     } else if (pagination.last) {
         searchDirection = "last";
     }
 
-    // // Determine the number of results to return
-    let maxReturns = pagination.first || 10; // Default to 10 if 'first' is not provided
+    let maxReturns = pagination.first || 10;
     if (pagination.last && !pagination.first) {
         maxReturns = pagination.last;
     }
@@ -108,23 +103,42 @@ async function fetchSysmonData(filter, eventType, pagination) {
     let imageContains = filter.image || "";
     let pidMatch = filter.process_id;
 
-    // Cursor value based on 'after' or 'before'
+    // first-after, last-before combination
     const cursorValue = pagination.after || pagination.before || "";
 
     try {
+        let cursorForOffset = cursorValue;
+        if (pagination.offset) {
+            // Fetch the cursor corresponding to the offset position
+            const offsetData = await executeRustBinary(
+                startKey,
+                endKey,
+                searchDirection,
+                pagination.offset, // offset to maxValue search
+                "", // cursor must be empty
+                imageContains,
+                pidMatch
+            );
+
+            const offsetDataReturn = offsetData[0];
+            const offsetPageInfoDataReturn =
+                offsetDataReturn[offsetDataReturn.length - 1];
+            // real-data cursor set
+            cursorForOffset = offsetPageInfoDataReturn.end_cursor;
+        }
+
         const rawData = await executeRustBinary(
             startKey,
             endKey,
             searchDirection,
             maxReturns,
-            cursorValue,
+            cursorForOffset,
             imageContains,
             pidMatch
         );
 
-        // Assuming rawData is an array with the last element being the pagination data
         const data = rawData[0];
-        const pageInfoData = data[data.length - 1]; // Pagination info
+        const pageInfoData = data[data.length - 1];
 
         // Extract the edges (all elements except the last one)
         const edges = data.slice(0, -1).map((item) => ({

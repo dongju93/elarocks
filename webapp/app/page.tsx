@@ -7,66 +7,44 @@ import {
     QueryClientProvider,
     keepPreviousData,
 } from "@tanstack/react-query";
+import Link from "next/link";
 import SearchArea from "./components/searchArea";
 import Pagination from "./components/pagination";
-
-interface SearchParams {
-    selectedOption: string;
-    startTime: string;
-    endTime: string;
-    perPage: number;
-    before: string | null;
-}
-
-interface NetworkConnectionNode {
-    agent_name: string;
-    agent_id: string;
-    event_action: string;
-    utc_time: string;
-    process_guid: string;
-    process_id: number;
-    image: string;
-    user: string;
-    protocol: string;
-    initiated: boolean;
-    source_is_ipv6: boolean;
-    source_ip: string;
-    source_hostname: string;
-    source_port: number;
-    destination_is_ipv6: boolean;
-    destination_ip: string;
-    destination_hostname: string;
-    destination_port: number;
-    destination_port_name: string;
-}
-
-interface NetworkConnectionEdge {
-    cursor: string;
-    node: NetworkConnectionNode;
-}
+import { SearchParams, NetworkConnectionEdge } from "./components/types";
 
 const fetchNetworkData = async (queryParams: SearchParams) => {
-    const response = await axios.post("/api/gql", queryParams);
+    const response = await axios.post("/api/gql", {
+        ...queryParams,
+        pagination: { last: queryParams.perPage, offset: queryParams.offset },
+    });
     return response.data.data;
 };
 
 function Home() {
+    const [currentPage, setCurrentPage] = useState(1);
+
     const [searchParams, setSearchParams] = useState<SearchParams>({
         selectedOption: "ProcessCreateEve",
         startTime: new Date().toISOString(),
         endTime: new Date().toISOString(),
         perPage: 10,
-        before: null,
+        offset: 0,
     });
 
     // react-query main hook
-    const { data, isLoading, error, isPlaceholderData } = useQuery({
+    const { data, isLoading, error } = useQuery({
         // key is core of react-hook
-        queryKey: ["networkData", searchParams],
+        queryKey: ["networkData", currentPage, searchParams],
         // data fetch query
         queryFn: () => fetchNetworkData(searchParams),
-        // STUDY!
+        // keep showing previous data when loading
         placeholderData: keepPreviousData,
+        // if staleTime is over than stale
+        staleTime: 10000,
+        // refetch every interval
+        // refetchInterval: 5000,
+        // cachedTime
+        gcTime: 8000,
     });
 
     const handleSearchSubmit = ({
@@ -79,11 +57,20 @@ function Home() {
         endTime: string;
     }) => {
         setSearchParams({
-            ...searchParams,
             selectedOption,
             startTime,
             endTime,
+            perPage: 10,
+            offset: 0,
         });
+        // setCurrentPage(1);
+    };
+
+    // offset calculate based on pages
+    const handlePageChange = (newPage: number) => {
+        const newOffset = (newPage - 1) * searchParams.perPage;
+        setSearchParams({ ...searchParams, offset: newOffset });
+        setCurrentPage(newPage);
     };
 
     if (isLoading) return <div>Loading...</div>;
@@ -92,6 +79,13 @@ function Home() {
     return (
         <div>
             <SearchArea onSubmit={handleSearchSubmit} />
+            <Pagination
+                totalCount={data?.NetworkConnectionEve?.totalCount || 0}
+                itemsPerPage={searchParams.perPage}
+                currentPage={currentPage}
+                onPageChange={handlePageChange}
+            />
+
             <table>
                 <thead>
                     <tr>
@@ -119,9 +113,18 @@ function Home() {
                 <tbody>
                     {data?.NetworkConnectionEve?.edges.map(
                         (edge: NetworkConnectionEdge) => (
-                            <tr key={edge.cursor}>
+                            <tr key={edge.cursor} style={{ cursor: "pointer" }}>
                                 <td>{edge.node.agent_name}</td>
-                                <td>{edge.node.agent_id}</td>
+                                <td>
+                                    <Link
+                                        // node data pass to details page
+                                        href={`/details/networks?data=${encodeURIComponent(
+                                            JSON.stringify(edge.node)
+                                        )}`}
+                                    >
+                                        {edge.node.agent_id}
+                                    </Link>
+                                </td>
                                 <td>{edge.node.event_action}</td>
                                 <td>{edge.node.utc_time}</td>
                                 <td>{edge.node.process_guid}</td>
