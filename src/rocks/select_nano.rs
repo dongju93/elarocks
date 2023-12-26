@@ -6,11 +6,14 @@ use std::error::Error;
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
 
+    // at least give 2 args, stat/end time
     if args.len() < 3 {
         eprintln!("Usage: nano_select <start_key> <end_key>");
         return Err("Insufficient arguments".into());
     }
 
+    // TODO
+    // split input keys with event name, date time
     let original_start_key = &args[1];
     let original_end_key = &args[2];
     let search_direction = args.get(3).map(String::as_str);
@@ -22,6 +25,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     let image_contains: Option<String> = args.get(6).cloned();
     let process_id_exact: Option<u32> = args.get(7).and_then(|s| s.parse().ok());
 
+    // split _ event name
+    let event_name_start_part = original_start_key
+        .split('_')
+        .nth(0)
+        .ok_or("Failed to extract datetime from start key")?;
+    let event_name_end_part = original_end_key
+        .split('_')
+        .nth(0)
+        .ok_or("Failed to extract datetime from end key")?;
+
+    // split _ nano seconds data time
     let datetime_start_part = original_start_key
         .split('_')
         .nth(1)
@@ -31,10 +45,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         .nth(1)
         .ok_or("Failed to extract datetime from end key")?;
 
+    // convert nano seconds date time string to formatted UTC
     let start_naive_dt =
         NaiveDateTime::parse_from_str(datetime_start_part, "%Y-%m-%d %H:%M:%S%.f")?;
     let end_naive_dt = NaiveDateTime::parse_from_str(datetime_end_part, "%Y-%m-%d %H:%M:%S%.f")?;
 
+    // making UTC ti epoch time to for keys
     let epoch_start_time = Utc
         .from_utc_datetime(&start_naive_dt)
         .timestamp_nanos_opt()
@@ -44,9 +60,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         .timestamp_nanos_opt()
         .ok_or("Failed to convert end datetime to nanoseconds")?;
 
-    let start_key = format!("Network connection detected_{}", epoch_start_time).into_bytes();
-    let end_key = format!("Network connection detected_{}", epoch_end_time).into_bytes();
+    // merge with names and epoch time to real key
+    let start_key = format!("{}_{}", event_name_start_part, epoch_start_time).into_bytes();
+    let end_key = format!("{}_{}", event_name_end_part, epoch_end_time).into_bytes();
 
+    // input with 'first' will forward search (start → end)
+    // input with 'last' will reverse search (end → start)
     let iterator_mode = match search_direction {
         Some("first") => IteratorMode::From(start_key.as_slice(), Direction::Forward),
         Some("last") => IteratorMode::From(end_key.as_slice(), Direction::Reverse),
@@ -54,6 +73,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
 
     let mut read_options = ReadOptions::default();
+    // limit lower and upper data for searching
+    read_options.set_iterate_lower_bound(start_key.as_slice());
     read_options.set_iterate_upper_bound(end_key.as_slice());
 
     let db = DB::open_default("/Users/dong-ju/Documents/My_code/elarocks/nano_db")?;
@@ -67,7 +88,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let start_printing = cursor_key
         .as_ref()
         .map(|cursor| cursor.is_empty())
-        .unwrap_or(true); // Start printing immediately if no cursor is provided or if it's empty
+        .unwrap_or(true); // Start printing(stdout) immediately if cursor is null or ""
     let mut found_cursor = false;
     let mut has_previous_page = false;
     let mut has_next_page = false;
@@ -77,27 +98,31 @@ fn main() -> Result<(), Box<dyn Error>> {
     for item in iterator {
         match item {
             Ok((key, value)) => {
-                // Deserialize value into JSON object (assuming the value is a JSON string)
+                // key and value to string
                 let value_str = String::from_utf8_lossy(&value).to_string();
                 let key_str = String::from_utf8_lossy(&key).to_string();
+                // Deserialize value into JSON object
                 let json: serde_json::Value = serde_json::from_str(&value_str)?;
 
+                // in forward search and current key is bigger than end_key then stop
                 if !is_reverse_search && key.as_ref() > end_key.as_slice() {
                     break;
                 }
 
+                // in reverse search and end_key is is bigger than current key then stop
                 if is_reverse_search && key.as_ref() < start_key.as_slice() {
                     break;
                 }
 
+                // total count is increase filter is true
                 if apply_filters(&json, &image_contains, &process_id_exact) {
                     total_count += 1;
 
-                    // Check if the current key is the cursor key
+                    // if the current key is the cursor key then skip for data duplication
                     if let Some(cursor) = &cursor_key {
                         if key.as_ref() == cursor.as_slice() {
                             found_cursor = true;
-                            continue; // Skip the cursor key itself to avoid duplication
+                            continue;
                         }
                     }
 
