@@ -1,3 +1,5 @@
+// TEST
+// data fetching rocksDB using binary
 const { execFile } = require("child_process");
 
 // Your provided function

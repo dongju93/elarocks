@@ -1,5 +1,7 @@
+// OUTDATED
+// client connection to postgres and query date time range for rocksDB key
 const { Client } = require("pg");
-require("dotenv").config();
+// require("dotenv").config();
 
 const client = new Client({
     host: process.env.DB_HOST,

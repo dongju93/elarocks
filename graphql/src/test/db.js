@@ -1,3 +1,5 @@
+// OUTDATED
+// fetch data from rocksDB using single key
 const RocksDB = require("rocksdb");
 const path = require("path");
 const dbPath = path.join(__dirname, "../../db");

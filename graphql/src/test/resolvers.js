@@ -1,3 +1,6 @@
+// OUTDATED
+// fetch each keys from postgres and find values from rocksDB
+// and filtering all each fetched data one by ones
 const { fetchKey } = require("../db");
 const { fetchDataBasedOnTime } = require("../fetchData");
 // for login function not yet implements
@@ -62,7 +65,7 @@ async function fetchSysmonData(filter, nodeType, pagination) {
     const { first, last, before, after } = pagination;
     const postgresResults = await fetchDataBasedOnTime(nodeType, start, end);
 
-    console.log(nodeType, start)
+    console.log(nodeType, start);
 
     if (process_id) {
         filters.push((result) => result.process_id == process_id);

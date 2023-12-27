@@ -126,14 +126,18 @@ fn main() -> Result<(), Box<dyn Error>> {
                         }
                     }
 
+                    // skip cursor or cursor is true (default)
                     if found_cursor || start_printing {
+                        // printed count is less than max count
                         if printed_count < max_print_count {
-                            // Set the end_cursor on the first item printed
+                            // if printed first then set start_cursor as current key (clone)
+                            // first entry of key
                             if printed_count == 0 {
                                 start_cursor = Some(key_str.clone());
                             }
 
-                            // Always update the end_cursor to the last item printed
+                            // keep update end_cursor as current key (clone)
+                            // last entry of key
                             end_cursor = Some(key_str.clone());
                             print!("{{\"cursor\": \"{}\", \"node\": {}}},", key_str, value_str);
                             printed_count += 1;
@@ -143,106 +147,139 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
 
             Err(e) => {
+                // keep struct as json format
                 eprintln!("{{Error reading from RocksDB: {}}},", e);
-                // Handle the error, e.g., break the loop or continue to the next item
             }
         }
     }
 
-    // Check for previous page
+    // check for there is previous data (page)
     if let Some(cursor) = &cursor_key {
+        // convert cursor vec as u8
         let cursor_key_bytes = cursor.as_slice();
+        has_previous_page = false;
 
+        // reverse search : end_key → start_cursor have data
         if is_reverse_search {
-            // Reverse search: Iterate from end_key to cursor and check for data existence
+            // start iteration form end_key
             let iter = db.iterator(IteratorMode::From(end_key.as_slice(), Direction::Reverse));
-            has_previous_page = false;
+            // cursor is not "" : because cursor is null or "" (empty)
             if !cursor.is_empty() {
                 for result in iter {
                     match result {
                         Ok((key, value)) => {
-                            let value_str = String::from_utf8_lossy(&value).to_string();
-                            let json: serde_json::Value = serde_json::from_str(&value_str)?;
+                            let key_ref = key.as_ref();
 
-                            if apply_filters(&json, &image_contains, &process_id_exact)
-                                && key.as_ref() > cursor_key_bytes
-                                && key.as_ref() != end_key.as_slice()
-                            {
-                                has_previous_page = true;
-                                break; // Break on finding the first key greater than the cursor
+                            // current key is bigger than cursor key
+                            // current key is not end_key : because start from end_key and might be current key and end_key is exact same key
+                            if key_ref > cursor_key_bytes && key_ref != end_key.as_slice() {
+                                let value_str = String::from_utf8_lossy(&value).to_string();
+                                let json: serde_json::Value = serde_json::from_str(&value_str)?;
+
+                                // filtering current data
+                                if apply_filters(&json, &image_contains, &process_id_exact) {
+                                    has_previous_page = true;
+                                    break;
+                                }
                             }
                         }
-                        Err(_) => continue, // Optionally handle errors or continue
+                        Err(e) => {
+                            eprintln!("Error from previousPage function (reverse search) : {},", e);
+                            continue;
+                        }
                     }
                 }
             }
         } else {
-            // Forward search: Iterate from start_key to cursor and check for data existence
+            // forward search : start_key → start_cursor have data
+            // start iteration form start_key
             let iter = db.iterator(IteratorMode::From(start_key.as_slice(), Direction::Forward));
-            has_previous_page = false;
+            // cursor is not "" : because cursor is null or "" (empty)
             if !cursor.is_empty() {
                 for result in iter {
                     match result {
                         Ok((key, value)) => {
-                            let value_str = String::from_utf8_lossy(&value).to_string();
-                            let json: serde_json::Value = serde_json::from_str(&value_str)?;
+                            let key_ref = key.as_ref();
 
-                            if apply_filters(&json, &image_contains, &process_id_exact)
-                                && key.as_ref() < cursor_key_bytes
-                                && key.as_ref() != start_key.as_slice()
-                            {
-                                has_previous_page = true;
-                                break; // Break on finding the first key less than the cursor
+                            // cursor key is bigger than current key
+                            // current key is not start_key : because start from end_key and might be current key and start_key is exact same key
+                            if key_ref < cursor_key_bytes && key_ref != start_key.as_slice() {
+                                let value_str = String::from_utf8_lossy(&value).to_string();
+                                let json: serde_json::Value = serde_json::from_str(&value_str)?;
+
+                                // filtering current data
+                                if apply_filters(&json, &image_contains, &process_id_exact) {
+                                    has_previous_page = true;
+                                    break;
+                                }
                             }
                         }
-                        Err(_) => continue, // Optionally handle errors or continue
+                        Err(e) => {
+                            eprintln!("Error from previousPage function (forward search) : {},", e);
+                            continue;
+                        }
                     }
                 }
             }
         }
     }
 
+    // there is end_cursor string convert byte then convert as u8 array or empty array
     let end_cursor_bytes = end_cursor.as_ref().map(|s| s.as_bytes()).unwrap_or(&[]);
+
+    // check for there is next data (page)
     if is_reverse_search {
-        // Reverse search: Iterate from end_key to cursor and check for data existence
+        // reverse search : end_cursor → start_key have data
         let iter = db.iterator(IteratorMode::From(end_cursor_bytes, Direction::Reverse));
-        has_next_page = false;
         for result in iter {
             match result {
                 Ok((key, value)) => {
-                    let value_str = String::from_utf8_lossy(&value).to_string();
-                    let json: serde_json::Value = serde_json::from_str(&value_str)?;
+                    let key_ref = key.as_ref();
 
-                    if apply_filters(&json, &image_contains, &process_id_exact)
-                        && key.as_ref() > start_key.as_slice()
-                        && key.as_ref() != end_cursor_bytes
-                    {
-                        has_next_page = true;
-                        break; // Break on finding the first key greater than the cursor
+                    // current key is bigger than start_key
+                    // current key is not end_cursor : because start from end_cursor and might be current key and end_cursor is exact same key
+                    if key_ref > start_key.as_slice() && key_ref != end_cursor_bytes {
+                        let value_str = String::from_utf8_lossy(&value).to_string();
+                        let json: serde_json::Value = serde_json::from_str(&value_str)?;
+
+                        // filtering current data
+                        if apply_filters(&json, &image_contains, &process_id_exact) {
+                            has_next_page = true;
+                            break;
+                        }
                     }
                 }
-                Err(_) => continue, // Optionally handle errors or continue
+                Err(e) => {
+                    eprintln!("Error from nextPage function (reverse search) : {},", e);
+                    continue;
+                }
             }
         }
     } else {
         // Forward search: Iterate from start_key to cursor and check for data existence
         let iter = db.iterator(IteratorMode::From(end_cursor_bytes, Direction::Forward));
-        has_next_page = false;
         for result in iter {
             match result {
                 Ok((key, value)) => {
-                    let value_str = String::from_utf8_lossy(&value).to_string();
-                    let json: serde_json::Value = serde_json::from_str(&value_str)?;
+                    let key_ref = key.as_ref();
 
-                    if apply_filters(&json, &image_contains, &process_id_exact)
-                        && key.as_ref() < end_key.as_slice()
-                        && key.as_ref() != end_cursor_bytes
-                    {
-                        has_next_page = true;
-                        break; // Break on finding the first key less than the cursor
+                    // end_key is bigger than current key
+                    // current key is not end_cursor : because start from end_cursor and might be current key and end_cursor is exact same key
+                    if key_ref < end_key.as_slice() && key_ref != end_cursor_bytes {
+                        let value_str = String::from_utf8_lossy(&value).to_string();
+                        let json: serde_json::Value = serde_json::from_str(&value_str)?;
+
+                        // filtering current data
+                        if apply_filters(&json, &image_contains, &process_id_exact) {
+                            has_next_page = true;
+                            break;
+                        }
                     }
                 }
-                Err(_) => continue, // Optionally handle errors or continue
+                Err(e) => {
+                    eprintln!("Error from nextPage function (forward search) : {},", e);
+                    continue;
+                }
             }
         }
     }
@@ -257,36 +294,47 @@ fn apply_filters(
     image_contains: &Option<String>,
     process_id_exact: &Option<u32>,
 ) -> bool {
-    // Convert empty strings to None
-    let image_contains = if let Some(ref image_substr) = image_contains {
-        if image_substr.is_empty() {
+    let image_contains = if let Some(ref image_contains_convert) = image_contains {
+        // image_contain is empty sting "" then set as None
+        if image_contains_convert.is_empty() {
             None
+        // image_contain is have some stings then set as contained string
         } else {
-            Some(image_substr)
+            Some(image_contains_convert)
         }
+    // image_contain is null then set as None
     } else {
         None
     };
 
-    // Convert empty strings to None
-    let process_id_exact = if let Some(pid) = process_id_exact {
-        Some(*pid)
+    // process_id_exact is have some integer then set as contained integer
+    let process_id_exact = if let Some(process_id_exact_convert) = process_id_exact {
+        Some(*process_id_exact_convert)
+    // process_id_exact is null then set as None
     } else {
         None
     };
 
     let image_condition = match image_contains {
-        Some(image_substr) => json["image"]
+        // if image_contains have strings
+        // map with image with string contains image_contains_convert
+        // if it's not contains goes false
+        Some(image_contains_convert) => json["image"]
             .as_str()
-            .map_or(false, |img| img.contains(image_substr)),
-        None => true, // No image condition specified, so it's always true
+            .map_or(false, |img| img.contains(image_contains_convert)),
+        // image_contains is None than goes true
+        None => true,
     };
 
     let process_id_condition = match process_id_exact {
-        Some(pid) => json["process_id"]
+        // if process_id_exact have integer
+        // map with process_id with integer exact process_id_exact_convert
+        // if it's not exact goes false
+        Some(process_id_exact_convert) => json["process_id"]
             .as_u64()
-            .map_or(false, |p| p == pid as u64),
-        None => true, // No process_id condition specified, so it's always true
+            .map_or(false, |p| p == process_id_exact_convert as u64),
+        // process_id_exact is None than goes true
+        None => true,
     };
 
     image_condition && process_id_condition
