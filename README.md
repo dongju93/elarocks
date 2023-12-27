@@ -108,6 +108,7 @@ http://localhost:3000
 6. web application api optimize
 7. add union on graphql for multiple data types
 8. fetch data from RocksDB using iteration (detach PostgreSQL) - speed test required - ✅
+9. apply lib.rs to main.rs for crate maintenance
 </br></br>
 
 
