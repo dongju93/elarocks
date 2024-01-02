@@ -1,3 +1,36 @@
+```mermaid
+flowchart TB
+	subgraph Windows11
+	  Winlogbeat--Read-->Sysmon
+	end
+	subgraph LogStorageServer
+		Winlogbeat--Push-->Elasticsearch
+	end
+	subgraph PreprocessingServer
+		Elasticsearch<--Request/Response-->DataFetchBatch:::foo
+		DataFetchBatch:::foo--Write-->CSV
+		DataStoreBatch:::foo--Read-->CSV
+	end
+	subgraph DatabaseServer
+		DataStoreBatch:::foo--Store-->RocksDB
+		PostgreSQL
+	end
+	subgraph MiddlewareServer
+		DataBinary:::foo<--Iter./Fetch-->RocksDB
+		GraphQL:::bar<--Execute/Return-->DataBinary:::foo
+		GraphQL:::bar<--SQL/Return-->PostgreSQL
+	end
+	subgraph ApplicaionServer
+		WebApplication:::foobar<--Query/Mutate-->GraphQL:::bar
+		Nginx--Proxy-->WebApplication:::foobar	
+	end
+	Browser--Access-->Nginx
+
+classDef foo stroke:#f00
+classDef bar stroke:#0f0
+classDef foobar stroke:#00f
+```
+
 # 1. Elasticsearch data to .csv file
 
 First, you need to collect [SYSMON](https://learn.microsoft.com/ko-kr/sysinternals/downloads/sysmon) data with [WINLOGBEAT](https://www.elastic.co/kr/beats/winlogbeat) and stored with [ELASTICSEARCH](https://www.elastic.co/kr/elasticsearch)   
