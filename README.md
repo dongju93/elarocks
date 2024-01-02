@@ -1,3 +1,4 @@
+## Ultimate goal diagram. Ver.1
 ```mermaid
 flowchart TB
 	subgraph Windows11
@@ -13,18 +14,15 @@ flowchart TB
 	end
 	subgraph DatabaseServer
 		DataStoreBatch:::foo--Store-->RocksDB
-		PostgreSQL
 	end
 	subgraph MiddlewareServer
-		DataBinary:::foo<--Iter./Fetch-->RocksDB
-		GraphQL:::bar<--Execute/Return-->DataBinary:::foo
-		GraphQL:::bar<--SQL/Return-->PostgreSQL
+		DataViewBinary:::foo<--Iter./Fetch-->RocksDB
+		GraphQL:::bar<--Execute/Return-->DataViewBinary:::foo
 	end
 	subgraph ApplicaionServer
 		WebApplication:::foobar<--Query/Mutate-->GraphQL:::bar
-		Nginx--Proxy-->WebApplication:::foobar	
 	end
-	Browser--Access-->Nginx
+	Browser--Access-->WebApplication:::foobar
 
 classDef foo stroke:#f00
 classDef bar stroke:#0f0
@@ -144,5 +142,43 @@ http://localhost:3000
 9. apply lib.rs to main.rs for crate maintenance
 </br></br>
 
+## Ultimate goal diagram. Ver.2
+```mermaid
+flowchart TB
+	subgraph Linux
+	  Filebeat--Read-->Sysmon
+		Filebeat--Read-->Suricata
+		Filebeat--Read-->Zeek
+		Filebeat--Read-->Netflow
+	end
+	subgraph LogSendingServer
+		Filebeat--Push-->Logstash--Push-->Redis
+	end
+	subgraph PreprocessingServer
+		Redis--Stream-->DataStorePipe:::foo
+	end
+	subgraph DatabaseServer
+		PostgreSQL<--Replication-->Replica
+		DataStorePipe:::foo--Store-->RocksDB
+	end
+	subgraph MiddlewareServer
+		DataViewBinary:::foo<--Iter./Fetch-->RocksDB
+		GraphQL:::bar<--Execute/Return-->DataViewBinary:::foo
+		LargeDataViewBinary:::foo<--Iter./Fetch-->RocksDB
+		GraphQL:::bar<--Execute/Return-->LargeDataViewBinary:::foo
+		GraphQL:::bar<--SQL/Return-->PostgreSQL
+	end
+	subgraph ApplicaionServer
+		WebApplication1:::foobar<--Query/Mutate-->GraphQL:::bar
+		WebApplication2:::foobar<--Query/Mutate-->GraphQL:::bar
+		Nginx--Proxy-->WebApplication1:::foobar
+		Nginx--Proxy-->WebApplication2:::foobar
+	end
+	Browser--Access-->Nginx
+
+classDef foo stroke:#f00
+classDef bar stroke:#0f0
+classDef foobar stroke:#00f
+```
 
 #### Copyright 2023. ClumL Inc. all rights reserved 
