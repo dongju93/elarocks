@@ -8,6 +8,7 @@ use tokio;
 // Import Enviroments with secrect key (settings)
 // Import Sysmon event structs
 mod envs;
+// mod rocks;
 mod structs;
 
 // use Imports

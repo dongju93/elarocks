@@ -1,8 +1,8 @@
+// use crate::envs::db::DB_LOCA;
 use chrono::{NaiveDateTime, TimeZone, Utc};
 use rocksdb::{Direction, IteratorMode, ReadOptions, DB};
 use std::env;
 use std::error::Error;
-
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
 

@@ -180,5 +180,3 @@ classDef foo stroke:#f00
 classDef bar stroke:#0f0
 classDef foobar stroke:#00f
 ```
-
-#### Copyright 2023. ClumL Inc. all rights reserved 
